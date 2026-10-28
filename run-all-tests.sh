@@ -31,6 +31,7 @@
 #
 #  Ctrl+C stops the current test (its report is still generated) and then
 #  aborts the campaign.
+#
 # ============================================================================
 
 set -uo pipefail

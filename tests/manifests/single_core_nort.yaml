@@ -1,7 +1,7 @@
 version: "1.0"
 
 images:
-  base: "rtmf/task-wrapper:orchestration-grpc"
+  base: "rtmo/task-wrapper:orchestration-grpc"
   repo: "jeffadac/realtime-microservices"
   tasks:
     - alias: "stress_task_1"

@@ -1,15 +1,29 @@
 .env
+.env.*
 
 # Benchmark results (kept outside git)
 results/
 
 # Build output and logs
 build/
+cmake-build-*/
+*.o
+*.obj
+*.so
+*.a
 *.log
+nohup.out
 
 # Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
 
-# macOS
+# Editors / OS
+.vscode/
+.idea/
+*.swp
 .DS_Store
+Thumbs.db

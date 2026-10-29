@@ -6,11 +6,12 @@
 #  implementation) with a single command.
 #
 #  For each implementation and each scenario in tests/manifests/<scenario>.yaml:
-#    1. write the scenario manifest over <impl>/tests/test_0_code/manifest.yaml
+#    1. write the scenario manifest over tests/tasks/<impl>/manifest.yaml
 #       (the deploy-manager image bakes that file in, so it must be replaced
 #       in place), with the implementation's own `base:`/`repo:` image lines
 #       and `iterations:` set to $ITERATIONS
-#    2. run <impl>/start-test.sh test_<scenario>_it<ITERATIONS>_<RUN_ID>
+#    2. run tests/start-test/<impl>.sh test_<scenario>_it<ITERATIONS>_<RUN_ID>
+#       (results in results/<impl>/<test>/)
 #  The original manifest of every implementation is restored at the end.
 #
 #  Usage:
@@ -52,7 +53,7 @@ fi
 
 # --- Validate the inputs before starting anything --------------------------
 for impl in $IMPLS; do
-    for f in "$impl/start-test.sh" "$impl/tests/test_0_code/manifest.yaml"; do
+    for f in "tests/start-test/$impl.sh" "tests/tasks/$impl/manifest.yaml"; do
         [ -f "$ROOT/$f" ] || { echo "[ERROR] Missing $ROOT/$f" >&2; exit 1; }
     done
 done
@@ -65,11 +66,11 @@ CAMPAIGN_LOG="$ROOT/run-all-tests_$(date +%Y%m%d_%H%M%S).log"
 # --- Back up the default manifests and restore them on exit ----------------
 BACKUP_DIR="$(mktemp -d)"
 for impl in $IMPLS; do
-    cp "$ROOT/$impl/tests/test_0_code/manifest.yaml" "$BACKUP_DIR/$impl.yaml"
+    cp "$ROOT/tests/tasks/$impl/manifest.yaml" "$BACKUP_DIR/$impl.yaml"
 done
 restore_manifests() {
     for impl in $IMPLS; do
-        [ -f "$BACKUP_DIR/$impl.yaml" ] && cp "$BACKUP_DIR/$impl.yaml" "$ROOT/$impl/tests/test_0_code/manifest.yaml"
+        [ -f "$BACKUP_DIR/$impl.yaml" ] && cp "$BACKUP_DIR/$impl.yaml" "$ROOT/tests/tasks/$impl/manifest.yaml"
     done
     rm -rf "$BACKUP_DIR"
 }
@@ -108,7 +109,7 @@ for impl in $IMPLS; do
         [ "$ABORT" = "1" ] && break 2
         n=$((n + 1))
         name="test_${t}_it${ITERATIONS}_${RUN_ID}"
-        results="$ROOT/$impl/results/$name"
+        results="$ROOT/results/$impl/$name"
 
         if [ -e "$results" ] && [ "${FORCE:-0}" != "1" ]; then
             log "[SKIP] ($n/$total) $impl / $name already exists (FORCE=1 to overwrite)"
@@ -121,12 +122,12 @@ for impl in $IMPLS; do
         log "[RUN ] ($n/$total) $impl / $name   ($(date '+%F %T'))"
         log "================================================================"
 
-        make_manifest "$t" "$impl" > "$ROOT/$impl/tests/test_0_code/manifest.yaml"
+        make_manifest "$t" "$impl" > "$ROOT/tests/tasks/$impl/manifest.yaml"
 
         t0=$(date +%s)
         # MANIFEST/MISSION_DIR are unset so every implementation uses the
         # (just rewritten) default manifest.
-        ( cd "$ROOT/$impl" && env -u MANIFEST -u MISSION_DIR FORCE="${FORCE:-0}" ./start-test.sh "$name" )
+        env -u MANIFEST -u MISSION_DIR FORCE="${FORCE:-0}" "$ROOT/tests/start-test/$impl.sh" "$name"
         rc=$?
         dt=$(( $(date +%s) - t0 ))
 

@@ -17,18 +17,29 @@ This repository hosts the **reference implementations** of the framework describ
 
 ```
 .
-├── native/                 # Bare-metal Execution Manager (no Docker), baseline
-├── orchestration-grpc/     # Orchestration  +  gRPC          IPC
-├── orchestration-mqueue/   # Orchestration  +  POSIX mqueue  IPC
-├── choreography-mqueue/    # Choreography   +  POSIX mqueue  IPC
-├── choreography-zeromq/    # Choreography   +  ZeroMQ        IPC
-└── tools/
-    └── rt_vs_nonrt_ttest.py  # Student/Welch t-tests: RT vs non-RT runs of one implementation
+├── runtime/                          # C code
+│   ├── common/shared/                #   logger and task model, same in every implementation
+│   ├── common/<impl>/                #   task.h / task_ipc.* that still differ per implementation
+│   ├── orchestration/execution-manager/{mqueue,grpc}/
+│   ├── orchestration/task-wrapper/{mqueue,grpc}/
+│   ├── choreography/task-wrapper/{mqueue,zeromq}/
+│   ├── native/execution-manager/     #   bare-metal baseline (no Docker)
+│   └── proto/task_service.proto      #   gRPC service definition
+├── tooling/legacy/<impl>/            # Python: deploy-manager and image-builder per implementation
+├── docker/<impl>/                    # Dockerfiles and compose.yaml (build context: repository root)
+├── tests/
+│   ├── manifests/                    #   benchmark scenarios
+│   ├── tasks/<impl>/                 #   stress_task_1..6 and the default manifest.yaml
+│   └── start-test/<impl>.sh          #   one test run of one implementation
+├── tools/                            # perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py
+├── docs/<impl>/                      # README and notes of each implementation
+├── results/<impl>/<test>/            # test output (not in git)
+└── run-all-tests.sh                  # whole campaign: every scenario on every implementation
 ```
 
-Each sub-folder is self-contained: it has its own `README.md`, `start-test.sh`,
-manifest (`tests/test_0_code/manifest.yaml`, except `native/`), `tools/` (report scripts)
-and `results/` (one folder per test run).
+`<impl>` is one of `orchestration-grpc`, `orchestration-mqueue`, `choreography-mqueue`,
+`choreography-zeromq` and `native`. The layout is an intermediate step of the restructure:
+the copies that still differ per implementation are merged in the next steps.
 
 ---
 
@@ -36,17 +47,17 @@ and `results/` (one folder per test run).
 
 | Project | Pattern | IPC between containers | Containers |
 |---|---|---|---|
-| [`orchestration-grpc/`](orchestration-grpc/) | Orchestration | gRPC (host network, one port per task image) | redis, deploy-manager, execution-manager, one task-wrapper per image |
-| [`orchestration-mqueue/`](orchestration-mqueue/) | Orchestration | POSIX message queues (`ipc: host`) | redis, deploy-manager, execution-manager, one task-wrapper per image |
-| [`choreography-mqueue/`](choreography-mqueue/) | Choreography | POSIX message queues (`ipc: host`) | redis, deploy-manager, one task-wrapper per image |
-| [`choreography-zeromq/`](choreography-zeromq/) | Choreography | ZeroMQ over Unix sockets (shared `zmq_ipc` volume) | redis, deploy-manager, one task-wrapper per image |
-| [`native/`](native/) | Single host process, multi-threaded | none | none (runs on the host) |
+| [`orchestration-grpc`](docs/orchestration-grpc/README.md) | Orchestration | gRPC (host network, one port per task image) | redis, deploy-manager, execution-manager, one task-wrapper per image |
+| [`orchestration-mqueue`](docs/orchestration-mqueue/README.md) | Orchestration | POSIX message queues (`ipc: host`) | redis, deploy-manager, execution-manager, one task-wrapper per image |
+| [`choreography-mqueue`](docs/choreography-mqueue/README.md) | Choreography | POSIX message queues (`ipc: host`) | redis, deploy-manager, one task-wrapper per image |
+| [`choreography-zeromq`](docs/choreography-zeromq/README.md) | Choreography | ZeroMQ over Unix sockets (shared `zmq_ipc` volume) | redis, deploy-manager, one task-wrapper per image |
+| [`native`](docs/native/README.md) | Single host process, multi-threaded | none | none (runs on the host) |
 
 The four containerised implementations share the same building blocks:
 
-- **Image builder** (`sdk/image-builder/`, runs on the developer machine): reads the manifest and
+- **Image builder** (`tooling/legacy/<impl>/image-builder/`, runs on the developer machine): reads the manifest and
   builds one Docker image per task on top of the implementation's task-wrapper base image.
-- **Deploy manager** (`services/deploy-manager/`, container): reads the manifest, starts one
+- **Deploy manager** (`tooling/legacy/<impl>/deploy-manager/`, container): reads the manifest, starts one
   task-wrapper container per task image and writes the execution plan into **Redis**.
 - **Orchestration**: a central **execution manager** reads the plan from Redis and triggers the
   task-wrappers (workers).
@@ -56,7 +67,7 @@ The four containerised implementations share the same building blocks:
 The manifest format (`images` + `schedule` sections) and the task API (`app_task.h` /
 `app_task.c`) are the same in all four containerised implementations, so the same task sources
 can be used by all of them. The Redis layout of the execution plan is implementation-specific
-(see each sub-project's README).
+(see each implementation's README in `docs/<impl>/`).
 
 ---
 
@@ -74,20 +85,20 @@ Every sub-project needs:
   pip install pyyaml python-dotenv docker
   ```
 
-The report scripts (`tools/perf_report.py`) need `matplotlib`, `numpy` and `PyYAML`; `start-test.sh`
-installs them into `tools/.venv` when they are missing.
+The report scripts (`tools/perf_report.py`) need `matplotlib`, `numpy` and `PyYAML`; the start
+scripts install them into `tools/.venv` when they are missing.
 
 ---
 
 ## Running a test
 
 ```bash
-git clone https://github.com/GeoDimi99/RTMF.git
-cd RTMF/<implementation>
-./start-test.sh [test-name]          # native/: sudo ./start-test.sh [test-name]
+git clone https://github.com/GeoDimi99/rtmo.git
+cd rtmo
+tests/start-test/<impl>.sh [test-name]     # native: sudo tests/start-test/native.sh [test-name]
 ```
 
-Each run writes `results/<test-name>/` (a random `results/test_<id>/` when no name is given) with
+Each run writes `results/<impl>/<test-name>/` (a random `results/<impl>/test_<id>/` when no name is given) with
 the container logs, a copy of the manifest, `perf.csv`, `stats.csv` and `report.pdf`.
 Set `FORCE=1` to overwrite an existing results folder.
 
@@ -98,7 +109,7 @@ python3 tools/rt_vs_nonrt_ttest.py --impl choreography-mqueue \
     --rt test_single_core_1 --nonrt test_single_core_nort_2
 ```
 
-The CSV and PDF are written to `<implementation>/results/`.
+The CSV and PDF are written to `results/<implementation>/`.
 
 ---
 

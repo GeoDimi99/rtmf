@@ -17,12 +17,12 @@ are corrected with Holm-Bonferroni inside each family (= one non-RT experiment).
 Only the Python standard library and PyYAML are required: the Student t
 distribution is computed through the regularized incomplete beta function.
 
-Usage (--rt and --nonrt are directory names inside <implementation>/results/;
+Usage (--rt and --nonrt are directory names inside results/<implementation>/;
 the implementation is the current directory unless --impl is given; the CSV is
-written to <implementation>/results/ unless --out is given, together with a
+written to results/<implementation>/ unless --out is given, together with a
 human-readable PDF report with the same name, unless --no-pdf is given):
-  cd choreography-mqueue
-  python3 ../tools/rt_vs_nonrt_ttest.py --rt test_single_core_1 --nonrt test_single_core_nort_4
+  cd results/choreography-mqueue
+  python3 ../../tools/rt_vs_nonrt_ttest.py --rt test_single_core_1 --nonrt test_single_core_nort_4
 
   python3 tools/rt_vs_nonrt_ttest.py --impl orchestration-grpc --rt test_single_core_1 --nonrt test_single_core_nort_2
   python3 tools/rt_vs_nonrt_ttest.py --impl choreography-zeromq --rt test_single_core_1 \
@@ -41,7 +41,7 @@ from pathlib import Path
 
 import yaml
 
-IMPLEMENTATIONS_ROOT = Path(__file__).resolve().parent.parent  # jeff/, containing the implementations
+RESULTS_ROOT = Path(__file__).resolve().parent.parent / "results"  # results/<implementation>/<test>/
 DEFAULT_METRICS = ["total_ms", "t_in_tw_ms", "q_em_tw_ms", "q_tw_em_ms"]
 RT_POLICIES = {"fifo", "rr"}
 NON_RT_POLICIES = {"normal", "other", "batch"}
@@ -445,28 +445,29 @@ def write_pdf(path, rows, rt_samples, nrt_samples_by_name, args, project):
 def main():
     ap = argparse.ArgumentParser(description="Student and Welch t-tests: RT vs non-RT experiments.")
     ap.add_argument("--impl", type=Path, default=Path.cwd(),
-                    help="implementation directory containing results/: a path, or just its name "
-                         "(e.g. orchestration-grpc) from any directory (default: current directory)")
-    ap.add_argument("--rt", required=True, help="RT experiment directory inside results/ (e.g. test_single_core_1)")
+                    help="results folder of the implementation (results/<impl>): a path, or just the "
+                         "implementation name (e.g. orchestration-grpc) from any directory "
+                         "(default: current directory)")
+    ap.add_argument("--rt", required=True, help="RT experiment directory inside results/<impl>/ (e.g. test_single_core_1)")
     ap.add_argument("--nonrt", required=True, nargs="+",
-                    help="non-RT experiment directory(ies) inside results/ (e.g. test_single_core_nort_2); globs allowed")
+                    help="non-RT experiment directory(ies) inside results/<impl>/ (e.g. test_single_core_nort_2); globs allowed")
     ap.add_argument("--metrics", nargs="+", default=DEFAULT_METRICS, help="perf.csv columns to test")
     ap.add_argument("--skip-iterations", type=int, default=1, help="warm-up iterations to drop (default: %(default)s)")
     ap.add_argument("--alpha", type=float, default=0.05, help="significance level (default: %(default)s)")
     ap.add_argument("--out", type=Path,
-                    help="output CSV (default: <impl>/results/ttest_<rt>_vs_<nonrt>.csv)")
+                    help="output CSV (default: results/<impl>/ttest_<rt>_vs_<nonrt>.csv)")
     ap.add_argument("--pdf", type=Path, help="output PDF report (default: same name as the CSV, .pdf)")
     ap.add_argument("--no-pdf", action="store_true", help="do not generate the PDF report")
     args = ap.parse_args()
 
-    impl = args.impl.resolve()
-    if not (impl / "results").is_dir() and not args.impl.is_absolute():
+    results = args.impl.resolve()
+    if not (results / args.rt).is_dir() and not args.impl.is_absolute():
         # Allow the bare implementation name (e.g. orchestration-grpc) from any directory
-        impl = (IMPLEMENTATIONS_ROOT / args.impl).resolve()
-    project = impl.name
-    results = impl / "results"
+        results = (RESULTS_ROOT / args.impl.name).resolve()
+    project = results.name
     if not results.is_dir():
-        ap.error(f"{results} not found: --impl must be an implementation directory (e.g. choreography-mqueue)")
+        ap.error(f"{results} not found: --impl must be an implementation name (e.g. choreography-mqueue) "
+                 "or its results folder")
 
     rt_dir = results / args.rt
     if not (rt_dir / "perf.csv").is_file():

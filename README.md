@@ -1,6 +1,6 @@
 <div align="center">
 
-# RTMF - Real-Time Microservices Framework
+# RTMO - Real-Time Microservices Orchestration
 ### *A Framework for Automated Deployment and Coordination*
 
 </div>

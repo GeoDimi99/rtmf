@@ -82,6 +82,7 @@ def main():
     
     image_builder = Builder(base_dir=base_dir, context_path=args.context, base_image=base_image)
 
+    failed = []
     for img in tasks:
         alias = img['alias']  
         src_dir = img['src']  
@@ -93,7 +94,12 @@ def main():
             
         except Exception as e:
             logger.error(f"Error building {alias}: {e}")
+            failed.append(alias)
             continue
+
+    if failed:
+        logger.error(f"Build failed for: {', '.join(failed)}")
+        sys.exit(1)
     
     # --- Publishing phase ---
     # publisher = Publisher()

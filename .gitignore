@@ -1,1 +1,15 @@
 .env
+
+# Benchmark results (kept outside git)
+results/
+
+# Build output and logs
+build/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

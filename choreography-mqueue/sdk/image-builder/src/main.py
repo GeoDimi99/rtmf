@@ -5,7 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from publisher.publisher import Publisher
 from dslparser.parser import DSL_Parser
-from dslparser.exceptions import ParserError
+from dslparser.exceptions import ParserError, ContextDirectoryError
 from builder.builder import Builder
 from logger import get_logger
 
@@ -62,7 +62,7 @@ def main():
             src_path = os.path.join(args.context, img['src'])
             if not os.path.isdir(src_path):
                 # We raise this here because main knows about the context path
-                raise ImageBuilderError(f"Source path '{src_path}' for alias '{img['alias']}' does not exist.")
+                raise ContextDirectoryError(f"Source path '{src_path}' for alias '{img['alias']}' does not exist.")
         
         logger.info("Manifest validated. Ready to build.")
 
@@ -82,6 +82,7 @@ def main():
     
     image_builder = Builder(base_dir=base_dir, context_path=args.context, base_image=base_image)
 
+    failed = []
     for img in tasks:
         alias = img['alias']  
         src_dir = img['src']  
@@ -93,7 +94,12 @@ def main():
             
         except Exception as e:
             logger.error(f"Error building {alias}: {e}")
+            failed.append(alias)
             continue
+
+    if failed:
+        logger.error(f"Build failed for: {', '.join(failed)}")
+        sys.exit(1)
     
     # --- Publishing phase ---
     # publisher = Publisher()

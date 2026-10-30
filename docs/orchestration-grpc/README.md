@@ -14,15 +14,16 @@ starts one task-wrapper container per task image and loads the schedule into Red
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/shared/                             # logger, task model (same in every implementation)
-runtime/common/orchestration-grpc/                 # task.h, task_ipc.* of this implementation
+runtime/common/                                    # logger, task model (same in every implementation)
+runtime/orchestration/ipc/grpc/                    # task_ipc.h: message protocol of this implementation
 runtime/orchestration/execution-manager/grpc/      # C/C++: central execution manager (gRPC client)
 runtime/orchestration/task-wrapper/grpc/           # C/C++: task-wrapper base image (gRPC server)
 runtime/proto/task_service.proto                   # gRPC service definition
 tooling/legacy/orchestration-grpc/image-builder/   # Python CLI that builds per-task Docker images
 tooling/legacy/orchestration-grpc/deploy-manager/  # Python: spawns task containers + writes Redis
 docker/orchestration-grpc/                         # Dockerfiles + compose.yaml
-tests/tasks/orchestration-grpc/                    # default manifest.yaml + stress_task_*/ sources
+benchmarks/tasks/orchestration-grpc.yaml           # default manifest (benchmarks branch)
+benchmarks/tasks/stress_task_*/                    # task sources, shared by every implementation (benchmarks branch)
 tests/start-test/orchestration-grpc.sh             # end-to-end build, run & benchmark
 tools/                                             # performance report scripts
 results/orchestration-grpc/                        # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
@@ -88,7 +89,7 @@ saved as `execution-manager.log`) and generates the performance report in `resul
 
 | Variable | Meaning |
 |---|---|
-| `MANIFEST=<path>` | Manifest to run (default: `tests/tasks/orchestration-grpc/manifest.yaml`). A custom one is **copied over** `tests/tasks/orchestration-grpc/manifest.yaml` (the original file is overwritten), so that the image-builder and the deploy-manager use the same manifest. |
+| `MANIFEST=<path>` | Manifest to run (default: `benchmarks/tasks/orchestration-grpc.yaml`). A custom one is **copied over** `benchmarks/tasks/orchestration-grpc.yaml` (the original file is overwritten), so that the image-builder and the deploy-manager use the same manifest. |
 | `FORCE=1` | Overwrite `results/orchestration-grpc/<test-name>/` if it already exists. |
 
 ---
@@ -103,7 +104,7 @@ docker build -t rtmo/task-wrapper:orchestration-grpc \
     -f runtime/orchestration/task-wrapper/grpc/Dockerfile .
 
 # 2. Build all per-task images from the manifest
-python3 tooling/legacy/orchestration-grpc/image-builder/src/main.py -f tests/tasks/orchestration-grpc/manifest.yaml -c tests/tasks/orchestration-grpc
+python3 tooling/legacy/orchestration-grpc/image-builder/src/main.py -f benchmarks/tasks/orchestration-grpc.yaml -c benchmarks/tasks
 
 # 3. Build the orchestrators
 docker compose build deploy-manager execution-manager
@@ -125,7 +126,7 @@ docker rm -f $(docker ps -aq --filter "name=task-service-") 2>/dev/null || true
 > Add `--no-cache` to the image-builder or `docker compose build --no-cache` to force a clean rebuild.
 
 > **Note.** The manifest is copied into the deploy-manager image at build time
-> (`/app/tests/tasks/orchestration-grpc/manifest.yaml`). After editing the manifest, rebuild the
+> (`/app/tests/test_0_code/manifest.yaml`). After editing the manifest, rebuild the
 > deploy-manager (step 3) as well as the task images (step 2).
 
 ---
@@ -213,7 +214,7 @@ The task-wrapper (`runtime/orchestration/task-wrapper/grpc/src/grpc_server.cpp`)
 
 ### Adding a new task
 
-1. Create `tests/tasks/orchestration-grpc/my_task/` with `app_task.h` and `app_task.c` (see `tests/tasks/orchestration-grpc/stress_task_1/` for a template).
+1. Create `benchmarks/tasks/my_task/` with `app_task.h` and `app_task.c` (see `benchmarks/tasks/stress_task_1/` for a template).
 2. Add the alias under `images.tasks` in the manifest.
 3. Add one or more entries under `schedule.tasks` referencing that alias.
 4. Re-run `tests/start-test/orchestration-grpc.sh` (or steps 2–6 of the manual workflow).

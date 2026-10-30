@@ -23,7 +23,8 @@ COPY runtime/orchestration/ipc/grpc/include/ task-wrapper/include/
 COPY runtime/common/src/ task-wrapper/src/
 
 # Copy task manifest
-COPY tests/tasks/orchestration-grpc/ ./tests/test_0_code/
+COPY benchmarks/tasks/ ./tests/test_0_code/
+COPY benchmarks/tasks/orchestration-grpc.yaml ./tests/test_0_code/manifest.yaml
 
 
 # Install deploy-manager and its dependencies

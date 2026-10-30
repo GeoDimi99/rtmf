@@ -24,8 +24,8 @@
 #               random results/choreography-zeromq/test_<id>/ directory is created.
 #
 # Environment:
-#   MISSION_DIR  directory containing manifest.yaml and one source folder per
-#                task (default: tests/tasks/choreography-zeromq)
+#   MANIFEST     manifest to run, relative to the repository root; its folder must
+#                hold one source folder per task (default: benchmarks/tasks/choreography-zeromq.yaml)
 #   FORCE=1      overwrite results/choreography-zeromq/<test-name>/ if it already exists
 #
 # Ctrl+C stops the test early; the report is built from the data collected
@@ -39,17 +39,18 @@ export COMPOSE_FILE="$ROOT/docker/choreography-zeromq/compose.yaml"   # project 
 source "$ROOT/tools/report-lib.sh"
 
 # Mission to deploy (can be overridden through the environment).
-MISSION_DIR="${MISSION_DIR:-$ROOT/tests/tasks/choreography-zeromq}"
+MANIFEST_PATH="$(cd "$ROOT" && realpath -m "${MANIFEST:-benchmarks/tasks/choreography-zeromq.yaml}")"
+MISSION_DIR="$(dirname "$MANIFEST_PATH")"   # task sources: the image build context
 
-if [ ! -f "$MISSION_DIR/manifest.yaml" ]; then
-    echo "ERROR: manifest.yaml not found in '$MISSION_DIR'" >&2
+if [ ! -f "$MANIFEST_PATH" ]; then
+    echo "ERROR: manifest not found: $MANIFEST_PATH" >&2
     exit 1
 fi
 
 rl_init_results "$ROOT/results/choreography-zeromq" "${1:-}"
 
 # Discover the task aliases declared in the manifest so cleanup is generic.
-TASK_NAMES=$(rl_extract_aliases "$MISSION_DIR/manifest.yaml" | sort -u)
+TASK_NAMES=$(rl_extract_aliases "$MANIFEST_PATH" | sort -u)
 
 echo "=== [1/6] Cleanup ==="
 cd "$ROOT"
@@ -68,7 +69,7 @@ docker build -t rtmo/task-wrapper:choreography-zeromq \
 
 echo "=== [3/6] Build per-task images (SDK) ==="
 cd "$MISSION_DIR"
-python3 "$ROOT/tooling/legacy/choreography-zeromq/image-builder/src/main.py" -f manifest.yaml -c .
+python3 "$ROOT/tooling/legacy/choreography-zeromq/image-builder/src/main.py" -f "$MANIFEST_PATH" -c .
 
 echo "=== [4/6] Start the system ==="
 cd "$ROOT"
@@ -100,7 +101,7 @@ docker compose stop >/dev/null 2>&1 || true
 
 echo "=== [6/6] Performance report ==="
 REPORT_RC=0
-rl_generate_report "$ROOT" "choreography-zeromq" "$MISSION_DIR/manifest.yaml" || REPORT_RC=$?
+rl_generate_report "$ROOT" "choreography-zeromq" "$MANIFEST_PATH" || REPORT_RC=$?
 
 echo "Done. Results: $RESULTS_DIR"
 exit $REPORT_RC

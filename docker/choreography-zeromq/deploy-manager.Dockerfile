@@ -17,7 +17,7 @@ RUN apt-get update && \
 # Copy source code
 COPY tooling/legacy/choreography-zeromq/deploy-manager/pyproject.toml .
 COPY tooling/legacy/choreography-zeromq/deploy-manager/src/ ./src/
-COPY tests/tasks/choreography-zeromq/manifest.yaml /tmp/
+COPY benchmarks/tasks/choreography-zeromq.yaml /tmp/manifest.yaml
 
 
 # Install deploy-manager and its dependencies

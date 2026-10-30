@@ -18,28 +18,32 @@ This repository hosts the **reference implementations** of the framework describ
 ```
 .
 ├── runtime/                          # C code
-│   ├── common/shared/                #   logger and task model, same in every implementation
-│   ├── common/<impl>/                #   task.h / task_ipc.* that still differ per implementation
+│   ├── common/                       #   logger and task model, shared by every implementation
 │   ├── orchestration/execution-manager/{mqueue,grpc}/
 │   ├── orchestration/task-wrapper/{mqueue,grpc}/
+│   ├── orchestration/ipc/{mqueue,grpc}/   # task_ipc.h: message protocol of each implementation
 │   ├── choreography/task-wrapper/{mqueue,zeromq}/
+│   ├── choreography/ipc/{mqueue,zeromq}/
 │   ├── native/execution-manager/     #   bare-metal baseline (no Docker)
 │   └── proto/task_service.proto      #   gRPC service definition
 ├── tooling/legacy/<impl>/            # Python: deploy-manager and image-builder per implementation
 ├── docker/<impl>/                    # Dockerfiles and compose.yaml (build context: repository root)
-├── tests/
-│   ├── manifests/                    #   benchmark scenarios
-│   ├── tasks/<impl>/                 #   stress_task_1..6 and the default manifest.yaml
-│   └── start-test/<impl>.sh          #   one test run of one implementation
-├── tools/                            # perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py
+├── tests/start-test/<impl>.sh        # one test run of one implementation
+├── tools/                            # perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py, generate_context.py
 ├── docs/<impl>/                      # README and notes of each implementation
 ├── results/<impl>/<test>/            # test output (not in git)
-└── run-all-tests.sh                  # whole campaign: every scenario on every implementation
+└── benchmarks/                       # only on the benchmarks branch: the application
+    ├── tasks/stress_task_1..6/       #   task sources, one copy for every implementation
+    ├── tasks/<impl>.yaml             #   default manifest of each implementation
+    ├── scenarios/                    #   benchmark scenarios
+    └── run-campaign.sh               #   whole campaign: every scenario on every implementation
 ```
 
 `<impl>` is one of `orchestration-grpc`, `orchestration-mqueue`, `choreography-mqueue`,
-`choreography-zeromq` and `native`. The layout is an intermediate step of the restructure:
-the copies that still differ per implementation are merged in the next steps.
+`choreography-zeromq` and `native`. The framework lives on `main`; the benchmark application
+(tasks, scenarios, campaign script) lives on the `benchmarks` branch, which is `main` plus the
+`benchmarks/` folder. The start scripts need the `benchmarks/` folder, so tests run from the
+`benchmarks` branch.
 
 ---
 
@@ -95,8 +99,12 @@ scripts install them into `tools/.venv` when they are missing.
 ```bash
 git clone https://github.com/GeoDimi99/rtmo.git
 cd rtmo
+git switch benchmarks                      # tasks and scenarios live on this branch
 tests/start-test/<impl>.sh [test-name]     # native: sudo tests/start-test/native.sh [test-name]
+benchmarks/run-campaign.sh                 # every scenario on every implementation
 ```
+
+`benchmarks/run-campaign.sh` takes `ITERATIONS`, `RUN_ID`, `IMPLS`, `TESTS` and `FORCE=1` (see its header).
 
 Each run writes `results/<impl>/<test-name>/` (a random `results/<impl>/test_<id>/` when no name is given) with
 the container logs, a copy of the manifest, `perf.csv`, `stats.csv` and `report.pdf`.

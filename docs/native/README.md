@@ -15,8 +15,7 @@ no Docker: the schedule is defined in C in `runtime/native/execution-manager/src
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/shared/             # logger, task model (same in every implementation)
-runtime/common/native/             # task.h of this implementation
+runtime/common/                    # logger, task model (same in every implementation)
 runtime/native/execution-manager/  # C: host process, schedule in src/main.c
 tests/start-test/native.sh         # end-to-end build, run & benchmark
 tools/                             # performance report scripts

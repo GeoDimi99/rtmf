@@ -15,13 +15,14 @@ Redis; every task-wrapper reads its own part of the plan, joins a start barrier 
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/shared/                              # logger, task model (same in every implementation)
-runtime/common/choreography-zeromq/                 # task.h, task_ipc.* of this implementation
+runtime/common/                                     # logger, task model (same in every implementation)
+runtime/choreography/ipc/zeromq/                    # task_ipc.h: message protocol of this implementation
 runtime/choreography/task-wrapper/zeromq/           # C: task-wrapper base image (local execution manager + task harness)
 tooling/legacy/choreography-zeromq/image-builder/   # Python CLI that builds per-task Docker images
 tooling/legacy/choreography-zeromq/deploy-manager/  # Python: spawns task containers + writes Redis
 docker/choreography-zeromq/                         # Dockerfiles + compose.yaml
-tests/tasks/choreography-zeromq/                    # default manifest.yaml + stress_task_*/ sources
+benchmarks/tasks/choreography-zeromq.yaml           # default manifest (benchmarks branch)
+benchmarks/tasks/stress_task_*/                     # task sources, shared by every implementation (benchmarks branch)
 tests/start-test/choreography-zeromq.sh             # end-to-end build, run & benchmark
 tools/                                              # performance report scripts
 results/choreography-zeromq/                        # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
@@ -86,12 +87,12 @@ Ctrl+C stops the test early; the report is built from the data collected so far.
 
 | Variable | Meaning |
 |---|---|
-| `MISSION_DIR=<dir>` | Directory with `manifest.yaml` and one source folder per task, used by the image-builder (default: `tests/tasks/choreography-zeromq`). |
+| `MANIFEST=<path>` | Manifest to run, relative to the repository root; its folder must hold one source folder per task, used by the image-builder (default: `benchmarks/tasks/choreography-zeromq.yaml`). |
 | `FORCE=1` | Overwrite `results/choreography-zeromq/<test-name>/` if it already exists. |
 
 > **Note.** The deploy-manager always runs the manifest copied into its image at build time
-> (`tests/tasks/choreography-zeromq/manifest.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/choreography-zeromq/deploy-manager/Dockerfile`).
-> When you use `MISSION_DIR=<dir>`, copy `<dir>/manifest.yaml` over `tests/tasks/choreography-zeromq/manifest.yaml`
+> (`benchmarks/tasks/choreography-zeromq.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/choreography-zeromq/deploy-manager/Dockerfile`).
+> When you use `MANIFEST=<path>`, copy that file over `benchmarks/tasks/choreography-zeromq.yaml`
 > as well, otherwise the images are built from one manifest and deployed from another.
 
 ---
@@ -107,7 +108,7 @@ docker build -t rtmo/task-wrapper:choreography-zeromq \
 
 # 2. Build all per-task images from the manifest
 python3 tooling/legacy/choreography-zeromq/image-builder/src/main.py \
-    -f tests/tasks/choreography-zeromq/manifest.yaml -c tests/tasks/choreography-zeromq
+    -f benchmarks/tasks/choreography-zeromq.yaml -c benchmarks/tasks
 
 # 3. Build the deploy-manager (this also bakes the manifest into it)
 docker compose build deploy-manager
@@ -198,7 +199,7 @@ schedule:
 
 ### Adding a new task
 
-1. Create `tests/tasks/choreography-zeromq/<my_task>/app_task.c` + `app_task.h` (implements `task_main(...)`; see `tests/tasks/choreography-zeromq/stress_task_1/` for a template). The task API is the same as in the other containerised RTMO implementations.
+1. Create `benchmarks/tasks/<my_task>/app_task.c` + `app_task.h` (implements `task_main(...)`; see `benchmarks/tasks/stress_task_1/` for a template). The task API is the same as in the other containerised RTMO implementations.
 2. Add the alias under `images.tasks` in the manifest.
 3. Add one or more entries under `schedule.tasks` referencing that alias.
 4. Re-run `tests/start-test/choreography-zeromq.sh` (or steps 2–7 of the manual workflow).
@@ -267,7 +268,7 @@ docker volume rm zmq_ipc 2>/dev/null || true
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `Source path '<path>' for alias '<alias>' does not exist.` (image-builder) | A `src:` folder declared in the manifest does not exist on disk | Create the missing `tests/tasks/choreography-zeromq/<alias>/` folder, or remove the alias from `manifest.yaml` |
+| `Source path '<path>' for alias '<alias>' does not exist.` (image-builder) | A `src:` folder declared in the manifest does not exist on disk | Create the missing `benchmarks/tasks/<alias>/` folder, or remove the alias from `manifest.yaml` |
 | Task containers keep printing `Waiting for schedule_data in Redis...` | The deploy-manager failed before writing the plan | `docker logs deploy-manager` |
 | `Container name "/redis" is already in use` | Stale container from a previous run | `start-test.sh` removes it automatically; otherwise: `docker rm -f redis deploy-manager` |
 | Port `6379` already in use | A local Redis is already running on the host | `sudo systemctl stop redis` (or change the compose port) |

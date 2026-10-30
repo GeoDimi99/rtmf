@@ -20,8 +20,8 @@
 #               random results/orchestration-grpc/test_<id>/ directory is created.
 #
 # Environment:
-#   MANIFEST    manifest to run (default: tests/tasks/orchestration-grpc/manifest.yaml; a custom one is
-#               copied over tests/tasks/orchestration-grpc/manifest.yaml)
+#   MANIFEST    manifest to run (default: benchmarks/tasks/orchestration-grpc.yaml; a custom one is
+#               copied over benchmarks/tasks/orchestration-grpc.yaml)
 #   FORCE=1     overwrite results/orchestration-grpc/<test-name>/ if it already exists
 #
 
@@ -40,7 +40,7 @@ TOTAL=9
 step() { echo -e "\n${GREEN}▶ [$1/$TOTAL] $2${NC}\n"; }
 fail() { echo -e "\n${RED}✖ Error at step $1: $2${NC}\n" >&2; exit 1; }
 
-MANIFEST_FILE="tests/tasks/orchestration-grpc/manifest.yaml"
+MANIFEST_FILE="benchmarks/tasks/orchestration-grpc.yaml"
 SOURCE_MANIFEST="${MANIFEST:-$MANIFEST_FILE}"
 
 rl_init_results "$ROOT/results/orchestration-grpc" "${1:-}"
@@ -75,7 +75,7 @@ docker build --no-cache -t rtmo/task-wrapper:orchestration-grpc \
 
 # 2 — Build per-task images via SDK image-builder
 step 2 "python3 image-builder (task manifest)"
-python3 tooling/legacy/orchestration-grpc/image-builder/src/main.py -f "$MANIFEST_FILE" -c tests/tasks/orchestration-grpc --no-cache \
+python3 tooling/legacy/orchestration-grpc/image-builder/src/main.py -f "$MANIFEST_FILE" -c benchmarks/tasks --no-cache \
   || fail 2 "python3 image-builder"
 
 # 3 — Build deploy-manager

@@ -17,7 +17,7 @@ RUN apt-get update && \
 # Copy source code
 COPY tooling/legacy/choreography-mqueue/deploy-manager/pyproject.toml .
 COPY tooling/legacy/choreography-mqueue/deploy-manager/src/ ./src/
-COPY tests/tasks/choreography-mqueue/manifest.yaml /tmp/
+COPY benchmarks/tasks/choreography-mqueue.yaml /tmp/manifest.yaml
 
 
 # Install deploy-manager and its dependencies

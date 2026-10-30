@@ -21,7 +21,7 @@
 #                random results/choreography-mqueue/test_<id>/ directory is created.
 #
 #  Environment:
-#    MANIFEST    manifest to run (default: tests/tasks/choreography-mqueue/manifest.yaml)
+#    MANIFEST    manifest to run (default: benchmarks/tasks/choreography-mqueue.yaml)
 #    FORCE=1     overwrite results/choreography-mqueue/<test-name>/ if it already exists
 #
 #  Ctrl+C stops the test early; the report is built from the data collected
@@ -37,7 +37,7 @@ cd "$ROOT"
 source "$ROOT/tools/report-lib.sh"
 
 # --- Resolve the manifest path ---------------------------------------------
-MANIFEST_PATH="${MANIFEST:-tests/tasks/choreography-mqueue/manifest.yaml}"
+MANIFEST_PATH="${MANIFEST:-benchmarks/tasks/choreography-mqueue.yaml}"
 CONTEXT="$(dirname "$MANIFEST_PATH")/"
 
 rl_init_results "$ROOT/results/choreography-mqueue" "${1:-}"

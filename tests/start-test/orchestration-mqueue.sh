@@ -5,7 +5,7 @@
 # with message-queue based IPC).
 #
 # What this script does:
-#   1. Reads the task images declared in tests/tasks/orchestration-mqueue/manifest.yaml
+#   1. Reads the task images declared in benchmarks/tasks/orchestration-mqueue.yaml
 #   2. Builds one Docker image per task using the task-wrapper Dockerfile
 #   3. Tears down any previous run and (re)builds & starts the core stack
 #      (redis, deploy-manager, execution-manager) via docker compose
@@ -21,7 +21,7 @@
 #               random results/orchestration-mqueue/test_<id>/ directory is created.
 #
 # Environment:
-#   MANIFEST    manifest to run (default: tests/tasks/orchestration-mqueue/manifest.yaml)
+#   MANIFEST    manifest to run (default: benchmarks/tasks/orchestration-mqueue.yaml)
 #   FORCE=1     overwrite results/orchestration-mqueue/<test-name>/ if it already exists
 #
 # Notes:
@@ -35,7 +35,7 @@ export COMPOSE_FILE="$ROOT/docker/orchestration-mqueue/compose.yaml"   # project
 cd "$ROOT"
 source "$ROOT/tools/report-lib.sh"
 
-MANIFEST_PATH="${MANIFEST:-tests/tasks/orchestration-mqueue/manifest.yaml}"
+MANIFEST_PATH="${MANIFEST:-benchmarks/tasks/orchestration-mqueue.yaml}"
 CONTEXT="$(dirname "$MANIFEST_PATH")/"
 TASK_WRAPPER_DOCKERFILE="docker/orchestration-mqueue/task-wrapper.Dockerfile"
 

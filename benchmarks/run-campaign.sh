@@ -1,12 +1,12 @@
 #!/bin/bash
 # ============================================================================
-#  run-all-tests.sh
+#  run-campaign.sh
 #
 #  Run the whole benchmark campaign (every test scenario on every
 #  implementation) with a single command.
 #
-#  For each implementation and each scenario in tests/manifests/<scenario>.yaml:
-#    1. write the scenario manifest over tests/tasks/<impl>/manifest.yaml
+#  For each implementation and each scenario in benchmarks/scenarios/<scenario>.yaml:
+#    1. write the scenario manifest over benchmarks/tasks/<impl>.yaml
 #       (the deploy-manager image bakes that file in, so it must be replaced
 #       in place), with the implementation's own `base:`/`repo:` image lines
 #       and `iterations:` set to $ITERATIONS
@@ -15,7 +15,7 @@
 #  The original manifest of every implementation is restored at the end.
 #
 #  Usage:
-#       ./run-all-tests.sh
+#       benchmarks/run-campaign.sh
 #
 #  Environment:
 #    ITERATIONS   iterations per test                  (default: 301;
@@ -25,7 +25,7 @@
 #    IMPLS        implementations to run (space separated)
 #                 (default: choreography-mqueue choreography-zeromq
 #                           orchestration-grpc orchestration-mqueue)
-#    TESTS        scenarios to run (space separated, names of tests/manifests/*.yaml)
+#    TESTS        scenarios to run (space separated, names of benchmarks/scenarios/*.yaml)
 #                 (default: all of them)
 #    FORCE=1      re-run and overwrite tests whose results folder already exists
 #                 (otherwise they are skipped)
@@ -37,14 +37,14 @@
 
 set -uo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"   # repository root
 cd "$ROOT"
 
 ITERATIONS="${ITERATIONS:-301}"
 RUN_ID="${RUN_ID:-1}"
 IMPLS="${IMPLS:-choreography-mqueue choreography-zeromq orchestration-grpc orchestration-mqueue}"
 TESTS="${TESTS:-single_core single_core_nort dual_core_sep dual_core_mix three_core_sep three_core_mix quad_core_sep quad_core_mix}"
-MANIFESTS_DIR="$ROOT/tests/manifests"
+MANIFESTS_DIR="$ROOT/benchmarks/scenarios"
 
 if ! [[ "$ITERATIONS" =~ ^[0-9]+$ ]] || [ "$ITERATIONS" -le 0 ]; then
     echo "[ERROR] ITERATIONS must be a positive integer (got '$ITERATIONS')." >&2
@@ -53,7 +53,7 @@ fi
 
 # --- Validate the inputs before starting anything --------------------------
 for impl in $IMPLS; do
-    for f in "tests/start-test/$impl.sh" "tests/tasks/$impl/manifest.yaml"; do
+    for f in "tests/start-test/$impl.sh" "benchmarks/tasks/$impl.yaml"; do
         [ -f "$ROOT/$f" ] || { echo "[ERROR] Missing $ROOT/$f" >&2; exit 1; }
     done
 done
@@ -61,16 +61,16 @@ for t in $TESTS; do
     [ -f "$MANIFESTS_DIR/$t.yaml" ] || { echo "[ERROR] Missing $MANIFESTS_DIR/$t.yaml" >&2; exit 1; }
 done
 
-CAMPAIGN_LOG="$ROOT/run-all-tests_$(date +%Y%m%d_%H%M%S).log"
+CAMPAIGN_LOG="$ROOT/run-campaign_$(date +%Y%m%d_%H%M%S).log"
 
 # --- Back up the default manifests and restore them on exit ----------------
 BACKUP_DIR="$(mktemp -d)"
 for impl in $IMPLS; do
-    cp "$ROOT/tests/tasks/$impl/manifest.yaml" "$BACKUP_DIR/$impl.yaml"
+    cp "$ROOT/benchmarks/tasks/$impl.yaml" "$BACKUP_DIR/$impl.yaml"
 done
 restore_manifests() {
     for impl in $IMPLS; do
-        [ -f "$BACKUP_DIR/$impl.yaml" ] && cp "$BACKUP_DIR/$impl.yaml" "$ROOT/tests/tasks/$impl/manifest.yaml"
+        [ -f "$BACKUP_DIR/$impl.yaml" ] && cp "$BACKUP_DIR/$impl.yaml" "$ROOT/benchmarks/tasks/$impl.yaml"
     done
     rm -rf "$BACKUP_DIR"
 }
@@ -122,7 +122,7 @@ for impl in $IMPLS; do
         log "[RUN ] ($n/$total) $impl / $name   ($(date '+%F %T'))"
         log "================================================================"
 
-        make_manifest "$t" "$impl" > "$ROOT/tests/tasks/$impl/manifest.yaml"
+        make_manifest "$t" "$impl" > "$ROOT/benchmarks/tasks/$impl.yaml"
 
         t0=$(date +%s)
         # MANIFEST/MISSION_DIR are unset so every implementation uses the

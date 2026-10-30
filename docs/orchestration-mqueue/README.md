@@ -16,14 +16,15 @@ Redis.
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/shared/                               # logger, task model (same in every implementation)
-runtime/common/orchestration-mqueue/                 # task.h, task_ipc.* of this implementation
+runtime/common/                                      # logger, task model (same in every implementation)
+runtime/orchestration/ipc/mqueue/                    # task_ipc.h: message protocol of this implementation
 runtime/orchestration/execution-manager/mqueue/      # C: central execution manager
 runtime/orchestration/task-wrapper/mqueue/           # C: task-wrapper base image
 tooling/legacy/orchestration-mqueue/image-builder/   # Python CLI that builds per-task Docker images
 tooling/legacy/orchestration-mqueue/deploy-manager/  # Python: spawns task containers + writes Redis
 docker/orchestration-mqueue/                         # Dockerfiles + compose.yaml
-tests/tasks/orchestration-mqueue/                    # default manifest.yaml + stress_task_*/ sources
+benchmarks/tasks/orchestration-mqueue.yaml           # default manifest (benchmarks branch)
+benchmarks/tasks/stress_task_*/                      # task sources, shared by every implementation (benchmarks branch)
 tests/start-test/orchestration-mqueue.sh             # end-to-end build, run & benchmark
 tools/                                               # performance report scripts
 results/orchestration-mqueue/                        # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
@@ -86,12 +87,12 @@ from the data collected so far.
 
 | Variable | Meaning |
 |---|---|
-| `MANIFEST=<path>` | Manifest used by the image-builder (default: `tests/tasks/orchestration-mqueue/manifest.yaml`). |
+| `MANIFEST=<path>` | Manifest used by the image-builder (default: `benchmarks/tasks/orchestration-mqueue.yaml`). |
 | `FORCE=1` | Overwrite `results/orchestration-mqueue/<test-name>/` if it already exists. |
 
 > **Note.** The deploy-manager always runs the manifest copied into its image at build time
-> (`tests/tasks/orchestration-mqueue/manifest.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/orchestration-mqueue/deploy-manager/Dockerfile`).
-> When you use `MANIFEST=<path>`, copy that file over `tests/tasks/orchestration-mqueue/manifest.yaml` as well,
+> (`benchmarks/tasks/orchestration-mqueue.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/orchestration-mqueue/deploy-manager/Dockerfile`).
+> When you use `MANIFEST=<path>`, copy that file over `benchmarks/tasks/orchestration-mqueue.yaml` as well,
 > otherwise the images are built from one manifest and deployed from another.
 
 ---
@@ -107,8 +108,8 @@ docker build -t rtmo/task-wrapper:orchestration-mqueue \
 
 # 2. Build all per-task images from the manifest
 python3 tooling/legacy/orchestration-mqueue/image-builder/src/main.py \
-    -f tests/tasks/orchestration-mqueue/manifest.yaml \
-    -c tests/tasks/orchestration-mqueue/
+    -f benchmarks/tasks/orchestration-mqueue.yaml \
+    -c benchmarks/tasks/
 
 # 3. Build the orchestrators (this also bakes the manifest into deploy-manager)
 docker compose build deploy-manager execution-manager
@@ -210,7 +211,7 @@ void  *task_main(void *arg);   /* arg is an input_t*; returns a g_new0-allocated
 
 ### Adding a new task
 
-1. Create `tests/tasks/orchestration-mqueue/<my_task>/app_task.h` and `app_task.c` (see `tests/tasks/orchestration-mqueue/stress_task_1/` as a template).
+1. Create `benchmarks/tasks/<my_task>/app_task.h` and `app_task.c` (see `benchmarks/tasks/stress_task_1/` as a template).
 2. Add the alias under `images.tasks` in the manifest.
 3. Add one or more entries under `schedule.tasks` referencing that alias.
 4. Re-run `tests/start-test/orchestration-mqueue.sh` (or steps 2–6 of the manual workflow).

@@ -16,13 +16,14 @@ message queues and then runs its own timeline.
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/shared/                              # logger, task model (same in every implementation)
-runtime/common/choreography-mqueue/                 # task.h, task_ipc.* of this implementation
+runtime/common/                                     # logger, task model (same in every implementation)
+runtime/choreography/ipc/mqueue/                    # task_ipc.h: message protocol of this implementation
 runtime/choreography/task-wrapper/mqueue/           # C: task-wrapper base image (local execution manager + task harness)
 tooling/legacy/choreography-mqueue/image-builder/   # Python CLI that builds per-task Docker images
 tooling/legacy/choreography-mqueue/deploy-manager/  # Python: spawns task containers + writes Redis
 docker/choreography-mqueue/                         # Dockerfiles + compose.yaml
-tests/tasks/choreography-mqueue/                    # default manifest.yaml + stress_task_*/ sources
+benchmarks/tasks/choreography-mqueue.yaml           # default manifest (benchmarks branch)
+benchmarks/tasks/stress_task_*/                     # task sources, shared by every implementation (benchmarks branch)
 tests/start-test/choreography-mqueue.sh             # end-to-end build, run & benchmark
 tools/                                              # performance report scripts
 results/choreography-mqueue/                        # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
@@ -84,12 +85,12 @@ test early; the report is built from the data collected so far.
 
 | Variable | Meaning |
 |---|---|
-| `MANIFEST=<path>` | Manifest used by the image-builder (default: `tests/tasks/choreography-mqueue/manifest.yaml`). |
+| `MANIFEST=<path>` | Manifest used by the image-builder (default: `benchmarks/tasks/choreography-mqueue.yaml`). |
 | `FORCE=1` | Overwrite `results/choreography-mqueue/<test-name>/` if it already exists. |
 
 > **Note.** The deploy-manager always runs the manifest copied into its image at build time
-> (`tests/tasks/choreography-mqueue/manifest.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/choreography-mqueue/deploy-manager/Dockerfile`).
-> When you use `MANIFEST=<path>`, copy that file over `tests/tasks/choreography-mqueue/manifest.yaml` as well,
+> (`benchmarks/tasks/choreography-mqueue.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/choreography-mqueue/deploy-manager/Dockerfile`).
+> When you use `MANIFEST=<path>`, copy that file over `benchmarks/tasks/choreography-mqueue.yaml` as well,
 > otherwise the images are built from one manifest and deployed from another.
 
 ---
@@ -108,8 +109,8 @@ docker build -t rtmo/task-wrapper:choreography-mqueue \
 #    (each image extends the base, drops in the task-specific app_task.{c,h},
 #     compiles with cmake and sets ENTRYPOINT=./build/execution-manager)
 python3 tooling/legacy/choreography-mqueue/image-builder/src/main.py \
-    -f tests/tasks/choreography-mqueue/manifest.yaml \
-    -c tests/tasks/choreography-mqueue
+    -f benchmarks/tasks/choreography-mqueue.yaml \
+    -c benchmarks/tasks
 
 # 3. Build the deploy-manager (this also bakes the manifest into it)
 docker compose build deploy-manager
@@ -200,7 +201,7 @@ schedule:
 
 ### Adding a new task
 
-1. Create `tests/tasks/choreography-mqueue/<my_task>/app_task.h` and `app_task.c` (implements `task_main(...)`; see `tests/tasks/choreography-mqueue/stress_task_1/` for a template). The task API is the same as in the other containerised RTMO implementations.
+1. Create `benchmarks/tasks/<my_task>/app_task.h` and `app_task.c` (implements `task_main(...)`; see `benchmarks/tasks/stress_task_1/` for a template). The task API is the same as in the other containerised RTMO implementations.
 2. Add the alias under `images.tasks` in the manifest.
 3. Add one or more entries under `schedule.tasks` referencing that alias.
 4. Re-run `tests/start-test/choreography-mqueue.sh` (or steps 2–6 of the manual workflow).

@@ -17,7 +17,7 @@ RUN apt-get update && \
 # Copy source code
 COPY tooling/legacy/orchestration-mqueue/deploy-manager/pyproject.toml .
 COPY tooling/legacy/orchestration-mqueue/deploy-manager/src/ ./src/
-COPY tests/tasks/orchestration-mqueue/manifest.yaml /tmp/
+COPY benchmarks/tasks/orchestration-mqueue.yaml /tmp/manifest.yaml
 
 
 # Install deploy-manager and its dependencies

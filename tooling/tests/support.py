@@ -59,11 +59,25 @@ class FakeRedis:
             h[str(k)] = encode_like_redis_py(v)
         return len(items)
 
-    def set(self, name, value):
+    def set(self, name, value, nx=False, ex=None):
+        if nx and name in self.data:
+            return None
         self.data[name] = encode_like_redis_py(value)
+        return True
+
+    def get(self, name):
+        value = self.data.get(name)
+        return value if isinstance(value, str) else None
+
+    def delete(self, *names):
+        return sum(1 for n in names if self.data.pop(n, None) is not None)
+
+    def scan_iter(self):
+        return iter(list(self.data))
 
     def hgetall(self, name):
-        return dict(self.data.get(name, {}))
+        value = self.data.get(name, {})
+        return dict(value) if isinstance(value, dict) else {}
 
 
 # The legacy loaders call redis.Redis(...) when they are created.
@@ -73,36 +87,85 @@ sys.modules.setdefault("redis", types.SimpleNamespace(Redis=FakeRedis))
 # --- Docker ------------------------------------------------------------------
 
 class FakeContainer:
-    def __init__(self, name, network):
+    def __init__(self, name, network, labels=None, owner=None):
         self.name = name
         self.short_id = "0000"
+        self.status = "running"
+        self.labels = labels or {}
         self.attrs = {"NetworkSettings": {"Networks": {network: {}}}}
+        self.owner = owner
 
     def stop(self):
-        pass
+        self.status = "exited"
 
     def remove(self):
-        pass
+        if self.owner is not None:
+            self.owner.alive.pop(self.name, None)
 
 
 class FakeContainers:
     def __init__(self, network):
         self.network = network
-        self.runs = []
+        self.runs = []          # every containers.run() call, in order
+        self.alive = {}         # name -> FakeContainer started and not removed
 
     def get(self, name):
         if name == socket.gethostname():          # the deploy-manager's own container
             return FakeContainer(name, self.network)
+        if name in self.alive:
+            return self.alive[name]
         raise docker.errors.NotFound(f"no container {name}")
 
     def run(self, **kwargs):
         self.runs.append(kwargs)
-        return FakeContainer(kwargs.get("name"), self.network)
+        c = FakeContainer(kwargs.get("name"), self.network, kwargs.get("labels"), owner=self)
+        self.alive[c.name] = c
+        return c
+
+    def list(self, all=False, filters=None):
+        label = (filters or {}).get("label")
+        return [c for c in self.alive.values() if label is None or label in c.labels]
+
+
+class FakeImage:
+    def __init__(self, tag):
+        self.id = "sha256:" + tag.replace("/", "_").replace(":", "_")
+
+
+class FakeImages:
+    def __init__(self):
+        self.ids = {}           # tag -> ID; unknown tags get a made-up ID
+
+    def get(self, tag):
+        image = FakeImage(tag)
+        image.id = self.ids.get(tag, image.id)
+        return image
+
+
+class FakeVolume:
+    def __init__(self, owner, name):
+        self.owner, self.name = owner, name
+
+    def remove(self, force=False):
+        self.owner.events.append(("remove", self.name))
+
+
+class FakeVolumes:
+    def __init__(self):
+        self.events = []
+
+    def get(self, name):
+        return FakeVolume(self, name)
+
+    def create(self, name):
+        self.events.append(("create", name))
 
 
 class FakeDocker:
     def __init__(self, network="rtmo_default"):
         self.containers = FakeContainers(network)
+        self.images = FakeImages()
+        self.volumes = FakeVolumes()
 
 
 # --- legacy deploy-managers --------------------------------------------------

@@ -1,0 +1,22 @@
+# Device stack: one Redis for every implementation (started by install.sh --role device).
+#
+# The runtimes read their plan from Redis at startup only. The mqueue and zeromq
+# runtimes connect to 'redis' (the alias on the 'rtmo' network); the gRPC ones,
+# on the host network, to 'localhost' (the published port).
+name: rtmo
+
+services:
+  redis:
+    image: "redis:8.4"
+    container_name: redis
+    cpuset: "${RTMO_INFRA_CPU:-4}"
+    restart: unless-stopped
+    networks:
+      rtmo:
+        aliases: [redis]
+    ports:
+      - "127.0.0.1:6379:6379"
+
+networks:
+  rtmo:
+    name: rtmo

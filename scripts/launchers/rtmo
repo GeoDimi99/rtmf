@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# rtmo: written by install.sh from scripts/launchers/rtmo
+RTMO_HOME="@RTMO_HOME@"
+export PYTHONPATH="$RTMO_HOME/tooling"          # makes dsl/ importable, nothing else
+exec "@PYTHON@" "$RTMO_HOME/tooling/builder/main.py" "$@"

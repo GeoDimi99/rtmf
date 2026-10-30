@@ -19,8 +19,12 @@ class BuildProfile:
     base_dockerfile: str                     # relative to the repository root
     entrypoint: str                          # binary the task image starts
     cmake_args: str = ""                     # extra arguments of the task build
-    no_cache: bool = False                   # build without the Docker cache
+    no_cache: bool = False                   # build the base and task images without the Docker cache
     execution_manager_dockerfile: Optional[str] = None   # orchestration only
+
+    @property
+    def execution_manager_image(self) -> str:
+        return f"rtmo/execution-manager:{self.name}"
 
     @property
     def needs_execution_manager(self) -> bool:

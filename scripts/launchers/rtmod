@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# rtmod: written by install.sh from scripts/launchers/rtmod
+#
+# Runs the deploy-manager image for one command. The container gets:
+#   - the host network (Redis on localhost:6379, gRPC task services),
+#   - the Docker socket (it starts the task containers),
+#   - the gRPC socket folder (readiness check),
+#   - for 'apply', the manifest's folder, read-only, at the same path.
+set -euo pipefail
+
+RTMO_HOME="@RTMO_HOME@"
+IMAGE="rtmo/deploy-manager:$(cat "$RTMO_HOME/VERSION")"
+
+INFRA_CPU=4
+if [ -f /etc/rtmo/device.yaml ]; then
+    v="$(sed -nE 's/^infra_cpu:[[:space:]]*([0-9]+).*/\1/p' /etc/rtmo/device.yaml | head -n1)"
+    INFRA_CPU="${v:-$INFRA_CPU}"
+fi
+
+args=("$@")
+mounts=()
+if [ "${1:-}" = "apply" ]; then
+    # the first argument after 'apply' that is neither an option nor an option's value
+    for ((i = 1; i < ${#args[@]}; i++)); do
+        case "${args[$i]}" in
+            --coordination|--technology|--iterations) i=$((i + 1)) ;;
+            -*) ;;
+            *)
+                manifest="$(realpath -- "${args[$i]}")"
+                [ -f "$manifest" ] || { echo "rtmod: manifest not found: ${args[$i]}" >&2; exit 1; }
+                args[$i]="$manifest"
+                mounts+=(-v "$(dirname "$manifest"):$(dirname "$manifest"):ro")
+                break ;;
+        esac
+    done
+fi
+
+mkdir -p /tmp/rtmo-grpc-ipc
+exec docker run --rm --network host --cpuset-cpus "$INFRA_CPU" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -v /tmp/rtmo-grpc-ipc:/ipc \
+    "${mounts[@]}" \
+    "$IMAGE" "${args[@]}"

@@ -4,6 +4,9 @@
 # Benchmark results (kept outside git)
 results/
 
+# Lock files written by rtmo build next to each manifest
+.rtmo/
+
 # Build output and logs
 build/
 cmake-build-*/

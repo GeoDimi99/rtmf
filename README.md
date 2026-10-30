@@ -101,19 +101,38 @@ scripts install them into `tools/.venv` when they are missing.
 
 ## Running a test
 
+Install once, from a clone, on the machine that builds (developer) and on the one that runs
+(device); one machine can do both:
+
 ```bash
-git clone https://github.com/GeoDimi99/rtmo.git
-cd rtmo
-git switch benchmarks                      # tasks and scenarios live on this branch
-tests/start-test/<impl>.sh [test-name]     # native: sudo tests/start-test/native.sh [test-name]
-benchmarks/run-campaign.sh                 # every scenario on every implementation
+git clone https://github.com/GeoDimi99/rtmo.git && cd rtmo
+sudo ./install.sh --role developer --role device   # rtmo, rtmod, deploy-manager image, Redis
+./install.sh --role developer --check              # only check the prerequisites
 ```
 
-`benchmarks/run-campaign.sh` takes `ITERATIONS`, `RUN_ID`, `IMPLS`, `TESTS` and `FORCE=1` (see its header).
+Then, with a manifest (schema 0.1, see `tooling/README.md` to convert a legacy one):
 
-Each run writes `results/<impl>/<test-name>/` (a random `results/<impl>/test_<id>/` when no name is given) with
-the container logs, a copy of the manifest, `perf.csv`, `stats.csv` and `report.pdf`.
-Set `FORCE=1` to overwrite an existing results folder.
+```bash
+rtmo validate my_app.yaml
+rtmo build    my_app.yaml                # images + lock file in .rtmo/ next to the manifest
+rtmod apply   my_app.yaml                # containers + plan in Redis (+ execution manager)
+rtmod status
+rtmod stop
+```
+
+`tools/run-test.sh <manifest> [test-name]` does a whole measured run: build, apply, follow
+until the run ends, collect the logs, stop, and write `results/<impl>/<test-name>/` (logs,
+`manifest.yaml`, `perf.csv`, `stats.csv`, `report.pdf`). Every command takes
+`--coordination`, `--technology` and `--iterations` to override the manifest.
+
+The benchmark campaign lives on the `benchmarks` branch:
+
+```bash
+git switch benchmarks
+sudo benchmarks/run-campaign.sh          # every scenario on every implementation
+```
+
+`native` keeps its own script: `sudo tests/start-test/native.sh [test-name]`.
 
 To compare a real-time run against non real-time runs of the same implementation:
 

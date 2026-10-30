@@ -1,0 +1,374 @@
+version: "1.0"
+
+images:
+  base: "rtmo/task-wrapper:orchestration-grpc"
+  repo: "jeffadac/realtime-microservices"
+  tasks:
+    - alias: "stress_task_1"
+      src: "stress_task_1"
+    - alias: "stress_task_2"
+      src: "stress_task_2"
+    - alias: "stress_task_3"
+      src: "stress_task_3"
+    - alias: "stress_task_4"
+      src: "stress_task_4"
+    - alias: "stress_task_5"
+      src: "stress_task_5"
+    - alias: "stress_task_6"
+      src: "stress_task_6"
+
+schedule:
+  name: "Configurable CPU/IO Benchmark"
+  description: "Benchmark with configurable CPU/IO ratio using total_ops and io_percentage parameters"
+  iterations: 100
+  
+  # Variant of quad_core_sep: the tasks of cores 6 and 7 are shifted in time so that
+  # all 18 activations (and completions) happen at different instants:
+  #   core 5: +0 ms   core 6: +5 ms   core 7: +15 ms   (start and deadline shifted alike,
+  #   so every task keeps the same window; priorities, policy and inputs unchanged).
+
+  tasks:
+    # ===================== CORE 5 =====================
+    - id: 1
+      image: "stress_task_1"
+      start: 50
+      deadline: 650
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 2
+      image: "stress_task_2"
+      start: 300
+      deadline: 1300
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 3
+      image: "stress_task_3"
+      start: 350
+      deadline: 950
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 70
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 4
+      image: "stress_task_4"
+      start: 370
+      deadline: 970
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 5
+      image: "stress_task_5"
+      start: 600
+      deadline: 1200
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 6
+      image: "stress_task_6"
+      start: 650
+      deadline: 1250
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    # ===================== CORE 6 =====================
+    - id: 7
+      image: "stress_task_1"
+      start: 55
+      deadline: 655
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 8
+      image: "stress_task_2"
+      start: 305
+      deadline: 1305
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 9
+      image: "stress_task_3"
+      start: 355
+      deadline: 955
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 70
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 10
+      image: "stress_task_4"
+      start: 375
+      deadline: 975
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 11
+      image: "stress_task_5"
+      start: 605
+      deadline: 1205
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 12
+      image: "stress_task_6"
+      start: 655
+      deadline: 1255
+      cpu_affinity: 6
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    # ===================== CORE 7 =====================
+    - id: 13
+      image: "stress_task_1"
+      start: 65
+      deadline: 665
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 14
+      image: "stress_task_2"
+      start: 315
+      deadline: 1315
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 50
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 15
+      image: "stress_task_3"
+      start: 365
+      deadline: 965
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 70
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 16
+      image: "stress_task_4"
+      start: 385
+      deadline: 985
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 17
+      image: "stress_task_5"
+      start: 615
+      deadline: 1215
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 18
+      image: "stress_task_6"
+      start: 665
+      deadline: 1265
+      cpu_affinity: 7
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int

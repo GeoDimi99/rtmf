@@ -32,14 +32,18 @@ void log_message(log_level_t level, const char *component, const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
 
+    /* One line at a time: without the lock another thread can write between the
+     * three calls, and a [PERF] line is glued to the next one (lost or corrupted record) */
+    flockfile(stdout);
     printf("%s [%s] %s: ", timestamp, level_str[level], component);
     vprintf(fmt, args);
     printf("\n");
 
-    va_end(args);
-
     /* Flush immediately so log order is preserved under RT scheduling */
     fflush(stdout);
+    funlockfile(stdout);
+
+    va_end(args);
 }
 
 void log_perf(const char *component, int iteration, unsigned int task_id,

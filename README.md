@@ -26,7 +26,12 @@ This repository hosts the **reference implementations** of the framework describ
 │   ├── choreography/ipc/{mqueue,zeromq}/
 │   ├── native/execution-manager/     #   bare-metal baseline (no Docker)
 │   └── proto/task_service.proto      #   gRPC service definition
-├── tooling/legacy/<impl>/            # Python: deploy-manager and image-builder per implementation
+├── tooling/                          # Python (see tooling/README.md)
+│   ├── dsl/                          #   manifest model, validation, legacy converter
+│   ├── builder/                      #   build profiles and image builds (developer side)
+│   ├── deploy-manager/               #   run profiles and Redis plan encoders (device side)
+│   ├── tests/                        #   python3 -m unittest discover -s tooling/tests
+│   └── legacy/<impl>/                #   deploy-manager and image-builder still used by the start scripts
 ├── docker/<impl>/                    # Dockerfiles and compose.yaml (build context: repository root)
 ├── tests/start-test/<impl>.sh        # one test run of one implementation
 ├── tools/                            # perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py, generate_context.py

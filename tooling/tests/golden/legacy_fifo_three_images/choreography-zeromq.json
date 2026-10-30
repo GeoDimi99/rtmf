@@ -1,0 +1,125 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_b",
+    "TASK_QUEUE_NAME": "img_b"
+   },
+   "image": "img_b",
+   "name": "img_b",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_a",
+    "TASK_QUEUE_NAME": "img_a"
+   },
+   "image": "img_a",
+   "name": "img_a",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_c",
+    "TASK_QUEUE_NAME": "img_c"
+   },
+   "image": "img_c",
+   "name": "img_c",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  }
+ ],
+ "redis": {
+  "schedule_data": {
+   "schedule:description": "Ties on the earliest start, several tasks per image",
+   "schedule:duration": "1500",
+   "schedule:images": "[\"img_c\", \"img_b\", \"img_a\"]",
+   "schedule:img_a:0": "{\"id\": 1, \"start\": 100, \"deadline\": 400, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"60\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 12, \\\"io_percentage\\\": 25}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:img_a:1": "{\"id\": 4, \"start\": 500, \"deadline\": 1500, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"70\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 30}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\", \\\"checksum\\\": \\\"int\\\"}\"}",
+   "schedule:img_a:length": "2",
+   "schedule:img_b:0": "{\"id\": 3, \"start\": 20, \"deadline\": 300, \"cpu_affinity\": \"4\", \"policy\": \"fifo\", \"priority\": \"1\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 8, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:img_b:length": "1",
+   "schedule:img_c:0": "{\"id\": 2, \"start\": 20, \"deadline\": 900, \"cpu_affinity\": \"6\", \"policy\": \"rr\", \"priority\": \"99\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 3}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:img_c:length": "1",
+   "schedule:iterations": "7",
+   "schedule:leader": "img_c",
+   "schedule:length": "3",
+   "schedule:name": "Fixture: three images",
+   "schedule:version": "0.0.0"
+  }
+ }
+}

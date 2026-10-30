@@ -1,0 +1,145 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_b",
+    "TASK_QUEUE_NAME": "img_b"
+   },
+   "image": "img_b",
+   "ipc_mode": "host",
+   "name": "img_b",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_a",
+    "TASK_QUEUE_NAME": "img_a"
+   },
+   "image": "img_a",
+   "ipc_mode": "host",
+   "name": "img_a",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "img_c",
+    "TASK_QUEUE_NAME": "img_c"
+   },
+   "image": "img_c",
+   "ipc_mode": "host",
+   "name": "img_c",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  }
+ ],
+ "redis": {
+  "schedule": {
+   "description": "Ties on the earliest start, several tasks per image",
+   "iterations": "7",
+   "length": "4",
+   "name": "Fixture: three images",
+   "version": "0.0.0"
+  },
+  "scheduletask:1": {
+   "cpu_affinity": "5",
+   "deadline": "400",
+   "depends_on": "[]",
+   "id": "1",
+   "image": "img_a",
+   "inputs": "[{\"total_ops\": 12, \"io_percentage\": 25}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "100"
+  },
+  "scheduletask:2": {
+   "cpu_affinity": "6",
+   "deadline": "900",
+   "depends_on": "[]",
+   "id": "2",
+   "image": "img_c",
+   "inputs": "[{\"total_ops\": 3}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "rr",
+   "priority": "99",
+   "start": "20"
+  },
+  "scheduletask:3": {
+   "cpu_affinity": "4",
+   "deadline": "300",
+   "depends_on": "[]",
+   "id": "3",
+   "image": "img_b",
+   "inputs": "[{\"total_ops\": 8, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "1",
+   "start": "20"
+  },
+  "scheduletask:4": {
+   "cpu_affinity": "5",
+   "deadline": "1500",
+   "depends_on": "[]",
+   "id": "4",
+   "image": "img_a",
+   "inputs": "[{\"total_ops\": 30}]",
+   "outputs": "{\"result\": \"int\", \"checksum\": \"int\"}",
+   "policy": "fifo",
+   "priority": "70",
+   "start": "500"
+  }
+ }
+}

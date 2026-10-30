@@ -1,0 +1,77 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "worker",
+    "TASK_QUEUE_NAME": "worker"
+   },
+   "image": "worker",
+   "ipc_mode": "host",
+   "name": "worker",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "unused",
+    "TASK_QUEUE_NAME": "unused"
+   },
+   "image": "unused",
+   "ipc_mode": "host",
+   "name": "unused",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  }
+ ],
+ "redis": {
+  "schedule_data": {
+   "schedule:description": "SCHED_NORMAL tasks with nice values",
+   "schedule:duration": "260",
+   "schedule:images": "[\"worker\"]",
+   "schedule:iterations": "1",
+   "schedule:leader": "worker",
+   "schedule:length": "1",
+   "schedule:name": "Fixture: non real-time",
+   "schedule:version": "0.0.0",
+   "schedule:worker:0": "{\"id\": 10, \"start\": 0, \"deadline\": 250, \"cpu_affinity\": \"7\", \"policy\": \"normal\", \"priority\": \"-8\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 16}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:worker:1": "{\"id\": 11, \"start\": 250, \"deadline\": 260, \"cpu_affinity\": \"7\", \"policy\": \"normal\", \"priority\": \"19\", \"depends_on\": \"[]\", \"inputs\": \"[{}]\", \"outputs\": \"{}\"}",
+   "schedule:worker:length": "2"
+  }
+ }
+}

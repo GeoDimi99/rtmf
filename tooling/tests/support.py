@@ -133,3 +133,10 @@ def manifests():
     files = sorted((TOOLING / "tests" / "fixtures").glob("*.yaml"))
     files += sorted((REPO / "benchmarks" / "scenarios").glob("*.yaml"))
     return files
+
+
+def golden_dir(manifest: Path) -> Path:
+    """Where the recorded legacy output of a test manifest lives (see record_golden.py)."""
+    if manifest.parent == TOOLING / "tests" / "fixtures":
+        return TOOLING / "tests" / "golden" / manifest.stem
+    return REPO / "benchmarks" / "golden" / manifest.stem

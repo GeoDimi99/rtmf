@@ -1,0 +1,175 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "GRPC_PORT": "50051",
+    "TASK_NAME": "img_b",
+    "TASK_QUEUE_NAME": "img_b"
+   },
+   "image": "img_b",
+   "ipc_mode": "host",
+   "name": "task-service-img_b",
+   "network_mode": "host",
+   "tmpfs": {
+    "/tmp": "size=64m,mode=1777"
+   },
+   "tty": true,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "/tmp/rtmo-grpc-ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "GRPC_PORT": "50052",
+    "TASK_NAME": "img_a",
+    "TASK_QUEUE_NAME": "img_a"
+   },
+   "image": "img_a",
+   "ipc_mode": "host",
+   "name": "task-service-img_a",
+   "network_mode": "host",
+   "tmpfs": {
+    "/tmp": "size=64m,mode=1777"
+   },
+   "tty": true,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "/tmp/rtmo-grpc-ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "GRPC_PORT": "50053",
+    "TASK_NAME": "img_c",
+    "TASK_QUEUE_NAME": "img_c"
+   },
+   "image": "img_c",
+   "ipc_mode": "host",
+   "name": "task-service-img_c",
+   "network_mode": "host",
+   "tmpfs": {
+    "/tmp": "size=64m,mode=1777"
+   },
+   "tty": true,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "/tmp/rtmo-grpc-ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  }
+ ],
+ "redis": {
+  "schedule": {
+   "description": "Ties on the earliest start, several tasks per image",
+   "iterations": "7",
+   "length": "4",
+   "name": "Fixture: three images",
+   "version": "0.0.0"
+  },
+  "scheduletask:1": {
+   "cpu_affinity": "5",
+   "deadline": "400",
+   "depends_on": "[]",
+   "inputs": "{\"total_ops\": {\"type\": \"int\", \"value\": 12}, \"io_percentage\": {\"type\": \"int\", \"value\": 25}}",
+   "name": "img_a",
+   "outputs": "{\"result\": {\"type\": \"int\"}}",
+   "policy": "fifo",
+   "priority": "60",
+   "service_port": "50052",
+   "start": "100"
+  },
+  "scheduletask:2": {
+   "cpu_affinity": "6",
+   "deadline": "900",
+   "depends_on": "[]",
+   "inputs": "{\"total_ops\": {\"type\": \"int\", \"value\": 3}}",
+   "name": "img_c",
+   "outputs": "{\"result\": {\"type\": \"int\"}}",
+   "policy": "rr",
+   "priority": "99",
+   "service_port": "50053",
+   "start": "20"
+  },
+  "scheduletask:3": {
+   "cpu_affinity": "4",
+   "deadline": "300",
+   "depends_on": "[]",
+   "inputs": "{\"total_ops\": {\"type\": \"int\", \"value\": 8}, \"io_percentage\": {\"type\": \"int\", \"value\": 0}}",
+   "name": "img_b",
+   "outputs": "{\"result\": {\"type\": \"int\"}}",
+   "policy": "fifo",
+   "priority": "1",
+   "service_port": "50051",
+   "start": "20"
+  },
+  "scheduletask:4": {
+   "cpu_affinity": "5",
+   "deadline": "1500",
+   "depends_on": "[]",
+   "inputs": "{\"total_ops\": {\"type\": \"int\", \"value\": 30}}",
+   "name": "img_a",
+   "outputs": "{\"result\": {\"type\": \"int\"}, \"checksum\": {\"type\": \"int\"}}",
+   "policy": "fifo",
+   "priority": "70",
+   "service_port": "50052",
+   "start": "500"
+  }
+ }
+}

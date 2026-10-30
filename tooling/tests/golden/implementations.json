@@ -1,0 +1,95 @@
+{
+ "choreography-mqueue": {
+  "base_dockerfile": "docker/choreography-mqueue/task-wrapper.Dockerfile",
+  "base_image": "rtmo/task-wrapper:choreography-mqueue",
+  "execution_manager": null,
+  "no_cache": false,
+  "task_dockerfile": [
+   "FROM rtmo/task-wrapper:choreography-mqueue",
+   "COPY stress_task_1/app_task.h /app/task-wrapper/include/app_task.h",
+   "COPY stress_task_1/app_task.c /app/task-wrapper/src/app_task.c",
+   "WORKDIR /app/task-wrapper",
+   "RUN cmake -S . -B build",
+   "RUN cmake --build build",
+   "ENTRYPOINT [\"./build/execution-manager\"]"
+  ]
+ },
+ "choreography-zeromq": {
+  "base_dockerfile": "docker/choreography-zeromq/task-wrapper.Dockerfile",
+  "base_image": "rtmo/task-wrapper:choreography-zeromq",
+  "execution_manager": null,
+  "no_cache": false,
+  "task_dockerfile": [
+   "FROM rtmo/task-wrapper:choreography-zeromq",
+   "COPY stress_task_1/app_task.h /app/task-wrapper/include/app_task.h",
+   "COPY stress_task_1/app_task.c /app/task-wrapper/src/app_task.c",
+   "WORKDIR /app/task-wrapper",
+   "RUN cmake -S . -B build",
+   "RUN cmake --build build",
+   "ENTRYPOINT [\"./build/execution-manager\"]"
+  ]
+ },
+ "orchestration-grpc": {
+  "base_dockerfile": "docker/orchestration-grpc/task-wrapper.Dockerfile",
+  "base_image": "rtmo/task-wrapper:orchestration-grpc",
+  "execution_manager": {
+   "cap_add": [
+    "SYS_NICE"
+   ],
+   "cpuset_cpus": "4",
+   "name": "execution-manager-grpc",
+   "network_mode": "host",
+   "volumes": {
+    "/tmp/rtmo-grpc-ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  "no_cache": true,
+  "task_dockerfile": [
+   "FROM rtmo/task-wrapper:orchestration-grpc",
+   "COPY stress_task_1/app_task.h /app/task-wrapper/include/app_task.h",
+   "COPY stress_task_1/app_task.c /app/task-wrapper/src/app_task.c",
+   "WORKDIR /app/task-wrapper",
+   "RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug",
+   "RUN cmake --build build",
+   "ENTRYPOINT [\"./build/task-wrapper\"]"
+  ]
+ },
+ "orchestration-mqueue": {
+  "base_dockerfile": "docker/orchestration-mqueue/task-wrapper.Dockerfile",
+  "base_image": "rtmo/task-wrapper:orchestration-mqueue",
+  "execution_manager": {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "4",
+   "ipc_mode": "host",
+   "name": "execution-manager",
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  "no_cache": false,
+  "task_dockerfile": [
+   "FROM rtmo/task-wrapper:orchestration-mqueue",
+   "COPY stress_task_1/app_task.h /app/task-wrapper/include/app_task.h",
+   "COPY stress_task_1/app_task.c /app/task-wrapper/src/app_task.c",
+   "WORKDIR /app/task-wrapper",
+   "RUN cmake -S . -B build",
+   "RUN cmake --build build",
+   "ENTRYPOINT [\"./build/task-wrapper\"]"
+  ]
+ }
+}

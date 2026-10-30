@@ -138,7 +138,12 @@ if [ "$DEVICE" = 1 ]; then
             info "wrote /etc/rtmo/device.yaml"
         fi
         INFRA_CPU="$(sed -nE 's/^infra_cpu:[[:space:]]*([0-9]+).*/\1/p' /etc/rtmo/device.yaml | head -n1)"
-        export RTMO_INFRA_CPU="${INFRA_CPU:-4}"
+        export RTMO_INFRA_CPU="${INFRA_CPU:-3}"
+        if [ "$RTMO_INFRA_CPU" = "4" ]; then
+            warn "infra_cpu is 4 in /etc/rtmo/device.yaml, the control core of the benchmark scenarios:" \
+                 "Redis and rtmod share it with the control threads. To move them to core 3:" \
+                 "sudo sed -i 's/^infra_cpu:.*/infra_cpu: 3/' /etc/rtmo/device.yaml, then run this script again"
+        fi
 
         info "building $DM_IMAGE"
         docker build -q -f "$ROOT/docker/deploy-manager.Dockerfile" \

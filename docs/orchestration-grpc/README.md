@@ -37,7 +37,7 @@ docs/orchestration-grpc/                       # this README and notes
 1. **`rtmod apply`** (the deploy-manager, host network) reads the manifest and assigns one gRPC port
    to each entry of `images`, in order: `50051`, `50052`, ... For every image it starts a container named
    `task-service-<alias>` (`network_mode=host`, `ipc_mode=host`, `cap_add=[SYS_NICE]`,
-   `rtprio=99`, `memlock=unlimited`, `cpuset 0-7`, RAM-backed `/tmp`, env `TASK_NAME`, `GRPC_PORT`)
+   `rtprio=99`, `memlock=unlimited`, `cpuset` = the manifest's `control_cpu` + `task_cpus`, env `RTMO_CONTROL_CPU` / `RTMO_TASK_CPUS`, RAM-backed `/tmp`, env `TASK_NAME`, `GRPC_PORT`)
    and waits until its gRPC server accepts connections on the Unix socket `/ipc/task_<port>.sock`.
    gRPC runs over Unix domain sockets (host directory `/tmp/rtmo-grpc-ipc`, mounted as `/ipc` in
    the task services, deploy-manager and execution-manager), like the `ipc://` endpoints of
@@ -48,7 +48,7 @@ docs/orchestration-grpc/                       # this README and notes
    - hash `scheduletask:<i>` (i = 1..length, the position of the task in `schedule.tasks`):
      `name` (image alias), `policy`, `priority`, `cpu_affinity`, `start`, `deadline`,
      `depends_on`, `inputs`, `outputs`, `service_port`
-3. **execution-manager** (container `execution-manager-grpc`, SCHED_FIFO 90, CPU 4) reads the
+3. **execution-manager** (container `execution-manager-grpc`, SCHED_FIFO 90, the manifest's `control_cpu`) reads the
    schedule from Redis **once at start-up**, so it must be started after the deploy-manager has
    finished. It fires every task at its `start` time with a gRPC call to `unix:///ipc/task_<service_port>.sock`
    and aborts the call when the task exceeds its `deadline`.

@@ -11,7 +11,7 @@ set -euo pipefail
 RTMO_HOME="@RTMO_HOME@"
 IMAGE="rtmo/deploy-manager:$(cat "$RTMO_HOME/VERSION")"
 
-INFRA_CPU=4
+INFRA_CPU=3
 if [ -f /etc/rtmo/device.yaml ]; then
     v="$(sed -nE 's/^infra_cpu:[[:space:]]*([0-9]+).*/\1/p' /etc/rtmo/device.yaml | head -n1)"
     INFRA_CPU="${v:-$INFRA_CPU}"

@@ -1,6 +1,6 @@
 # /etc/rtmo/device.yaml: settings of this device, not of an application.
 # install.sh --role device creates it from this example when it is missing.
 
-# Core of Redis and of the deploy-manager (rtmod). Until the CPU model of
-# plan P5 this is also the core of the control threads.
-infra_cpu: 4
+# Core of Redis and of the deploy-manager (rtmod): the infrastructure core.
+# Keep it off the manifests' control_cpu and task_cpus (plan section 05).
+infra_cpu: 3

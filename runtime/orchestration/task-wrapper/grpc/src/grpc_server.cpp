@@ -22,6 +22,7 @@
 extern "C" {
     #include "../include/app_task.h"
     #include "logger.h"
+    #include "rtmo_cpu.h"
 }
 
 using grpc::Server;
@@ -51,14 +52,15 @@ typedef struct {
     int  cpu_affinity;       // CPU core to pin the task thread to (-1 = no explicit pinning)
     int  policy;             // Scheduler policy of the task thread
     int  nice;               // Nice value applied by the thread itself (only for OTHER/BATCH)
+    int  pinned_at_creation; // 1: cpu_affinity was set in the thread attributes, the thread must not set it again
 } perf_thread_ctx_t;
 
 extern "C" {
     void* task_main_wrapper(void* arg) {
         perf_thread_ctx_t* pctx = (perf_thread_ctx_t*)arg;
 
-        /* Set CPU affinity from inside the thread (self-affinity), as requested by the manifest */
-        if (pctx->cpu_affinity >= 0) {
+        /* Set CPU affinity from inside the thread only when the attributes could not (see create_task_thread) */
+        if (pctx->cpu_affinity >= 0 && !pctx->pinned_at_creation) {
             cpu_set_t cpuset;
             CPU_ZERO(&cpuset);
             CPU_SET(pctx->cpu_affinity, &cpuset);
@@ -143,6 +145,30 @@ static int parse_task_input(const std::string& inputs_json, input_t* input) {
 }
 
 // Implementation of TaskExecutor service
+// Task threads start on their manifest core: the CPU is set in the thread attributes (plan
+// P5), so the thread never runs on the control core first. If pthread_create refuses the
+// attributes with EINVAL, the thread is created without the CPU and sets it itself (the
+// former behaviour), and the log says so.
+static int create_task_thread(pthread_t *thread, pthread_attr_t *attr, perf_thread_ctx_t *pctx) {
+    pctx->pinned_at_creation = 0;
+    if (attr != NULL && pctx->cpu_affinity >= 0) {
+        cpu_set_t cpus;
+        CPU_ZERO(&cpus);
+        CPU_SET(pctx->cpu_affinity, &cpus);
+        if (pthread_attr_setaffinity_np(attr, sizeof(cpus), &cpus) == 0) {
+            pctx->pinned_at_creation = 1;
+            int ret = pthread_create(thread, attr, task_main_wrapper, pctx);
+            if (ret != EINVAL) return ret;
+            log_message(LOG_WARN, "task-wrapper",
+                        "rtmo-affinity thread=task: CPU %d in the thread attributes refused (errno=%d), "
+                        "the thread sets it itself", pctx->cpu_affinity, ret);
+            pthread_attr_setaffinity_np(attr, 0, NULL);
+            pctx->pinned_at_creation = 0;
+        }
+    }
+    return pthread_create(thread, attr, task_main_wrapper, pctx);
+}
+
 class TaskExecutorServiceImpl final : public TaskExecutor::Service {
     Status ExecuteTask(ServerContext* context, 
                       const TaskRequest* request,
@@ -172,8 +198,7 @@ class TaskExecutorServiceImpl final : public TaskExecutor::Service {
         // Set stack size (avoid page faults)
         pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN + 0x4000);
 
-        // Note: CPU affinity is set by the thread itself in task_main_wrapper
-        // (from request->cpu_affinity())
+        // CPU affinity: set in the attributes by create_task_thread (from request->cpu_affinity())
 
         // Set scheduling policy based on request
         std::string policy_str = request->policy();
@@ -202,8 +227,8 @@ class TaskExecutorServiceImpl final : public TaskExecutor::Service {
         pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
 
         // Create real-time thread (using generic wrapper that pins CPU affinity)
-        perf_thread_ctx_t pctx = { &input, NULL, 0, 0, 0, request->has_cpu_affinity() ? request->cpu_affinity() : -1, policy, request->priority() };
-        if (pthread_create(&task_thread, &attr, task_main_wrapper, &pctx) != 0) {
+        perf_thread_ctx_t pctx = { &input, NULL, 0, 0, 0, request->has_cpu_affinity() ? request->cpu_affinity() : -1, policy, request->priority(), 0 };
+        if (create_task_thread(&task_thread, &attr, &pctx) != 0) {
             response->set_status("ERROR");
             response->set_error_message("Failed to create task thread");
             pthread_attr_destroy(&attr);
@@ -288,8 +313,9 @@ class TaskExecutorServiceImpl final : public TaskExecutor::Service {
         int stack_ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN + 0x4000);
         log_message(LOG_DEBUG, "task-wrapper", "Set stack size: %s", stack_ret == 0 ? "OK" : "FAILED");
 
-        // Note: CPU affinity will be set AFTER pthread_create
-        // Setting it in attributes with pthread_attr_setaffinity_np causes errno=22 with SCHED_FIFO
+        // CPU affinity: set in the attributes by create_task_thread. It used to fail with errno=22
+        // because a rejected priority made glibc copy the caller's; create_task_thread falls back
+        // to the former in-thread affinity if it ever happens again.
 
         // 3. Set scheduling policy
         memset(&param, 0, sizeof(param));
@@ -344,8 +370,8 @@ class TaskExecutorServiceImpl final : public TaskExecutor::Service {
  }
         
         // Create thread with RT attributes (or fallback to default if RT failed)
-        perf_thread_ctx_t pctx = { &input, NULL, 0, 0, 0, request->has_cpu_affinity() ? request->cpu_affinity() : -1, policy, priority_val };
-        int ret = pthread_create(&task_thread, &attr, task_main_wrapper, &pctx);
+        perf_thread_ctx_t pctx = { &input, NULL, 0, 0, 0, request->has_cpu_affinity() ? request->cpu_affinity() : -1, policy, priority_val, 0 };
+        int ret = create_task_thread(&task_thread, &attr, &pctx);
         pthread_attr_destroy(&attr);
 
         // Raise the RT thread to its target priority: it is queued at the tail of that priority list
@@ -360,7 +386,7 @@ class TaskExecutorServiceImpl final : public TaskExecutor::Service {
             // RT failed, try again with no attributes
             log_message(LOG_WARN, "task-wrapper", "Thread creation with RT failed (errno=%d), trying without RT...", ret);
             use_rt = false;  // updates the flag
-            ret = pthread_create(&task_thread, NULL, task_main_wrapper, &pctx);
+            ret = create_task_thread(&task_thread, NULL, &pctx);   // no attributes: the thread pins itself
         }
         
         if (ret != 0) {
@@ -465,6 +491,10 @@ void RunServer(const std::string& server_address) {
 }
 
 int main(int argc, char** argv) {
+    // Control core first (RTMO_CONTROL_CPU): the gRPC server and its internal threads inherit it.
+    // Task threads get their own core in create_task_thread.
+    rtmo_pin_control("task-wrapper");
+
     // Memory locking for real-time determinism
     // NOTE: use only MCL_CURRENT (not MCL_FUTURE) to avoid forcing residency of
     // all future pages allocated by gRPC/protobuf. This drastically reduces the
@@ -496,17 +526,6 @@ int main(int argc, char** argv) {
     std::string server_address = "unix:///ipc/task_";
     server_address += grpc_port ? grpc_port : "50051";  // Default to 50051 if not set
     server_address += ".sock";
-
-    // Pin gRPC server and its internal threads to CPU 4.
-    // Task execution threads (task_main_wrapper) are pinned to CPU 5.
-    cpu_set_t server_cpuset;
-    CPU_ZERO(&server_cpuset);
-    CPU_SET(4, &server_cpuset);
-    if (sched_setaffinity(0, sizeof(cpu_set_t), &server_cpuset) != 0) {
-        log_message(LOG_WARN, "task-wrapper", "Failed to set CPU affinity to CPU 4");
-    } else {
-        log_message(LOG_INFO, "task-wrapper", "gRPC server pinned to CPU 4");
-    }
 
     if (task_name) {
         log_message(LOG_INFO, "task-wrapper", "Starting server for task: %s", task_name);

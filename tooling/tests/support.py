@@ -5,8 +5,8 @@ and docker modules the tooling needs anyway).
 - puts tooling/, tooling/builder/ and tooling/deploy-manager/ on sys.path
 - FakeRedis: in-memory hashes, values encoded as redis-py encodes them
 - FakeDocker: records containers.run() calls instead of starting containers
-- legacy(): imports one legacy deploy-manager under its own package name
-- manifests(): the legacy manifests the equivalence tests run on
+- manifests(): the legacy manifests the equivalence tests run on, and where the
+  golden files recorded from them are
 """
 
 import importlib
@@ -80,8 +80,6 @@ class FakeRedis:
         return dict(value) if isinstance(value, dict) else {}
 
 
-# The legacy loaders call redis.Redis(...) when they are created.
-sys.modules.setdefault("redis", types.SimpleNamespace(Redis=FakeRedis))
 
 
 # --- Docker ------------------------------------------------------------------
@@ -168,27 +166,6 @@ class FakeDocker:
         self.volumes = FakeVolumes()
 
 
-# --- legacy deploy-managers --------------------------------------------------
-
-def legacy(impl: str):
-    """The legacy deploy-manager of `impl` as package 'legacy_<impl>' (its src/ folder)."""
-    name = "legacy_" + impl.replace("-", "_")
-    if name not in sys.modules:
-        src = TOOLING / "legacy" / impl / "deploy-manager" / "src"
-        spec = importlib.util.spec_from_file_location(name, src / "__init__.py",
-                                                      submodule_search_locations=[str(src)])
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[name] = module
-        spec.loader.exec_module(module)
-        logging.getLogger("deploy-manager").disabled = True   # the legacy code logs every step
-    return types.SimpleNamespace(
-        parser=importlib.import_module(f"{name}.manifest.parser"),
-        loader=importlib.import_module(f"{name}." + ("database" if impl == "orchestration-grpc" else "redisdb")
-                                       + ".redis_loader"),
-        runner=importlib.import_module(f"{name}.deploy.runner"),
-    )
-
-
 # --- manifests ---------------------------------------------------------------
 
 def manifests():
@@ -200,7 +177,7 @@ def manifests():
 
 
 def golden_dir(manifest: Path) -> Path:
-    """Where the recorded legacy output of a test manifest lives (see record_golden.py)."""
+    """Where the output the legacy tooling produced from a test manifest is recorded."""
     if manifest.parent == TOOLING / "tests" / "fixtures":
         return TOOLING / "tests" / "golden" / manifest.stem
     return manifest.parent          # benchmarks/golden/<scenario>/, next to legacy.yaml

@@ -16,26 +16,26 @@ message queues and then runs its own timeline.
 Paths from the root of the RTMO repository:
 
 ```
-runtime/common/                                     # logger, task model (same in every implementation)
-runtime/choreography/ipc/mqueue/                    # task_ipc.h: message protocol of this implementation
-runtime/choreography/task-wrapper/mqueue/           # C: task-wrapper base image (local execution manager + task harness)
-tooling/legacy/choreography-mqueue/image-builder/   # Python CLI that builds per-task Docker images
-tooling/legacy/choreography-mqueue/deploy-manager/  # Python: spawns task containers + writes Redis
-docker/choreography-mqueue/                         # Dockerfiles + compose.yaml
-benchmarks/tasks/choreography-mqueue.yaml           # default manifest (benchmarks branch)
-benchmarks/tasks/stress_task_*/                     # task sources, shared by every implementation (benchmarks branch)
-tests/start-test/choreography-mqueue.sh             # end-to-end build, run & benchmark
-tools/                                              # performance report scripts
-results/choreography-mqueue/                        # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
-docs/choreography-mqueue/                           # this README and notes
+runtime/common/                            # logger, task model (same in every implementation)
+runtime/choreography/ipc/mqueue/           # task_ipc.h: message protocol of this implementation
+runtime/choreography/task-wrapper/mqueue/  # C: task-wrapper base image (local execution manager + task harness)
+tooling/builder/                           # rtmo: builds the base, task (and execution-manager) images
+tooling/deploy-manager/                    # rtmod: profile 'choreography-mqueue' (run_profiles.py), plan encoder encoders/choreography.py
+docker/choreography-mqueue/                # task-wrapper Dockerfile(s)
+benchmarks/scenarios/*.yaml                # benchmark scenarios, DSL 0.1 (benchmarks branch)
+benchmarks/tasks/stress_task_*/            # task sources, shared by every implementation (benchmarks branch)
+tools/run-test.sh                          # one measured run of a manifest
+tools/                                     # performance report scripts
+results/choreography-mqueue/               # one folder per test run (logs, perf.csv, stats.csv, report.pdf)
+docs/choreography-mqueue/                  # this README and notes
 ```
 
 ---
 
 ## ⚙️ How it works
 
-1. **deploy-manager** parses `manifest.yaml` and, for every entry of `images.tasks`, starts a
-   task-wrapper container named after the image alias. The containers join the compose network
+1. **`rtmod apply`** (the deploy-manager) reads the manifest and, for every entry of `images`, starts a
+   task-wrapper container named after the image alias. The containers join the device network `rtmo`
    (so they can reach `redis`) and get `ipc_mode=host`, `cap_add=[SYS_NICE, IPC_LOCK]`,
    `rtprio=99`, `memlock=unlimited`, `cpuset 0-7`, env `TASK_NAME` / `TASK_QUEUE_NAME` = alias.
 2. It then writes the distributed plan into a single Redis hash, `schedule_data`:
@@ -52,164 +52,41 @@ docs/choreography-mqueue/                           # this README and notes
 
 ---
 
-## 📋 Prerequisites
+## 🚀 Running it
 
-- **Linux host with `PREEMPT_RT` kernel** and POSIX message queue support (`/dev/mqueue`
-  available and writable).
-- **Docker Engine ≥ 20.10** with Docker Compose v2 (the `docker compose ...`
-  syntax).
-- **Python ≥ 3.10** and access to `/var/run/docker.sock`.
-- Python packages used by the image-builder (declared in `tooling/legacy/choreography-mqueue/image-builder/requirements.txt`):
-
-  ```bash
-  pip install -r tooling/legacy/choreography-mqueue/image-builder/requirements.txt
-  ```
-
-> **Tip.** If you don't want to install the Python deps system-wide, use a virtualenv: `python3 -m venv .venv && source .venv/bin/activate && pip install -r tooling/legacy/choreography-mqueue/image-builder/requirements.txt`.
-
----
-
-## 🚀 Automated start
+Install RTMO once with `install.sh` (see the [repository README](../../README.md)); tests run from
+the `benchmarks` branch. One measured run of a scenario on this implementation:
 
 ```bash
-git clone https://github.com/GeoDimi99/RTMO.git
-cd RTMO/choreography-mqueue
-tests/start-test/choreography-mqueue.sh [test-name]
+sudo tools/run-test.sh benchmarks/scenarios/dual_core_sep.yaml my_test \
+     --coordination choreography --technology mqueue --iterations 21
 ```
 
-`start-test.sh` builds the task-wrapper base image and the per-task images, wipes
-`/dev/mqueue/*`, starts the stack with `docker compose up --build -d`, follows every task
-container until all of them finish, saves the logs and generates the performance report in
-`results/choreography-mqueue/<test-name>/` (a random `results/choreography-mqueue/test_<id>/` when no name is given). Ctrl+C stops the
-test early; the report is built from the data collected so far.
-
-| Variable | Meaning |
-|---|---|
-| `MANIFEST=<path>` | Manifest used by the image-builder (default: `benchmarks/tasks/choreography-mqueue.yaml`). |
-| `FORCE=1` | Overwrite `results/choreography-mqueue/<test-name>/` if it already exists. |
-
-> **Note.** The deploy-manager always runs the manifest copied into its image at build time
-> (`benchmarks/tasks/choreography-mqueue.yaml` → `/tmp/manifest.yaml`, see `tooling/legacy/choreography-mqueue/deploy-manager/Dockerfile`).
-> When you use `MANIFEST=<path>`, copy that file over `benchmarks/tasks/choreography-mqueue.yaml` as well,
-> otherwise the images are built from one manifest and deployed from another.
-
----
-
-## 🛠️ Manual workflow
-
-Follow these instructions to start the system step by step:
+Results go to `results/choreography-mqueue/my_test/` (logs, `manifest.yaml`, `perf.csv`, `stats.csv`,
+`report.pdf`). The same run step by step, with the same options on every command:
 
 ```bash
-# 1. Build the task-wrapper base image (Ubuntu + glib + json-glib + hiredis + sources);
-#    the tag must match images.base in the manifest
-docker build -t rtmo/task-wrapper:choreography-mqueue \
-    -f runtime/choreography/task-wrapper/mqueue/Dockerfile .
-
-# 2. Build all per-task images from the manifest
-#    (each image extends the base, drops in the task-specific app_task.{c,h},
-#     compiles with cmake and sets ENTRYPOINT=./build/execution-manager)
-python3 tooling/legacy/choreography-mqueue/image-builder/src/main.py \
-    -f benchmarks/tasks/choreography-mqueue.yaml \
-    -c benchmarks/tasks
-
-# 3. Build the deploy-manager (this also bakes the manifest into it)
-docker compose build deploy-manager
-
-# 4. Wipe stale POSIX message queues from previous runs
-sudo rm -f /dev/mqueue/*
-
-# 5. Start Redis and deploy-manager
-#    (deploy-manager parses the manifest, spawns one container per task image with
-#     the required real-time capabilities and writes the schedule into Redis)
-docker compose up -d redis
-docker compose up deploy-manager
-
-# 6. Follow the task containers (each one is named after its image alias)
-docker logs -f stress_task_1
-
-# 7. Cleanup
-docker compose down
-docker rm -f $(docker ps -aq --filter "name=stress_task_") 2>/dev/null || true
-sudo rm -f /dev/mqueue/*
+O="--coordination choreography --technology mqueue --iterations 21"
+rtmo build       benchmarks/scenarios/dual_core_sep.yaml $O   # images + lock file
+sudo rtmod apply benchmarks/scenarios/dual_core_sep.yaml $O   # containers + plan in Redis
+sudo rtmod status
+sudo rtmod stop
 ```
 
-> Add `--no-cache` to `docker build` or `docker compose build --no-cache` to force a clean rebuild.
+The container settings of this implementation are in `tooling/deploy-manager/run_profiles.py`
+(profile `choreography-mqueue`), the Redis plan it reads in `tooling/deploy-manager/encoders/choreography.py`. Manifests
+use the RTMO DSL 0.1 (`tooling/README.md`); the whole campaign is `benchmarks/run-campaign.sh`.
 
 ---
 
-## 📝 Manifest reference
+## ➕ Adding a new task
 
-A manifest has two top-level sections:
-
-- **`images`**: base image, optional remote repo, list of task images to build.
-- **`schedule`**: list of tasks with their real-time parameters.
-
-### Minimal example
-
-```yaml
-version: "1.0"
-
-images:
-  base: "rtmo/task-wrapper:choreography-mqueue"
-  repo: "jeffadac/task-wrapper"
-  tasks:
-    - alias: "stress_task_1"
-      src:   "stress_task_1"
-
-schedule:
-  name: "Single-task demo"
-  description: "One configurable CPU/IO stress task."
-  iterations: 5
-
-  tasks:
-    - id: 1
-      image: "stress_task_1"
-      start: 50            # ms after schedule t₀
-      deadline: 650        # ms after schedule t₀ (absolute)
-      cpu_affinity: 5      # pin worker thread to CPU 5
-      policy: "fifo"       # fifo | rr | other | normal | batch | idle
-      priority: 50         # RT priority [1..99] for fifo/rr, nice value otherwise
-      depends_on: []
-      inputs:
-        total_ops:     { type: int, value: 17 }
-        io_percentage: { type: int, value: 0  }
-      outputs:
-        result:        { type: int }
-```
-
-### Field semantics
-
-| Field | Type | Meaning |
-|---|---|---|
-| `images.base` | string | Base image used by every task image. Must match the tag built in step 1. |
-| `images.repo` | string | Docker repo for tagging/pushing (publishing is currently disabled in the image-builder). |
-| `images.tasks[].alias` | string | Local name of the image and of its container (matches `schedule.tasks[].image`). |
-| `images.tasks[].src` | string | Sub-folder under the build context containing `app_task.{c,h}`. |
-| `schedule.name` / `description` / `version` | string | Descriptive metadata (`version` defaults to `0.0.0`). |
-| `schedule.iterations` | int | How many times the whole schedule is replayed back-to-back (values `< 1` run it once). |
-| `schedule.tasks[].id` | int | Task identifier (used in logs, Redis and `perf.csv`). **Required.** |
-| `schedule.tasks[].image` | string | Image alias the task runs in. Must be declared under `images.tasks`. **Required.** |
-| `schedule.tasks[].start` | int (ms) | Time after t₀ when the task is fired. The earliest one selects the leader image. **Required.** |
-| `schedule.tasks[].deadline` | int (ms) | Absolute deadline (after t₀). The latest one is the iteration length. **Required.** |
-| `schedule.tasks[].cpu_affinity` | int | CPU index the worker thread is pinned to. **Required.** |
-| `schedule.tasks[].policy` | enum | `fifo` → `SCHED_FIFO`, `rr` → `SCHED_RR`, `other`/`normal` → `SCHED_OTHER`, `batch` → `SCHED_BATCH`, `idle` → `SCHED_IDLE`. `deadline` is accepted by the parser but not supported yet (it needs `sched_setattr`). **Required.** |
-| `schedule.tasks[].priority` | int | RT priority `1..99` for `fifo`/`rr`; nice value `-20..19` for `other`/`normal`/`batch`; ignored for `idle`. **Required.** |
-| `schedule.tasks[].depends_on` | list | Reserved for future DAG support: currently ignored. |
-| `schedule.tasks[].inputs` | map | Typed inputs; the `value`s are passed to `task_main()` as a JSON object (`{"total_ops": 17, ...}`). |
-| `schedule.tasks[].outputs` | map | Declared output schema (informative). |
-
-
-### Adding a new task
-
-1. Create `benchmarks/tasks/<my_task>/app_task.h` and `app_task.c` (implements `task_main(...)`; see `benchmarks/tasks/stress_task_1/` for a template). The task API is the same as in the other containerised RTMO implementations.
-2. Add the alias under `images.tasks` in the manifest.
-3. Add one or more entries under `schedule.tasks` referencing that alias.
-4. Re-run `tests/start-test/choreography-mqueue.sh` (or steps 2–6 of the manual workflow).
-
+1. Create `benchmarks/tasks/<my_task>/app_task.h` and `app_task.c` (start from `benchmarks/tasks/stress_task_1/`).
+2. In a manifest, add the image `{name: my_task, src: ../tasks/my_task}` under `images`.
+3. Add one or more entries under `schedule.tasks` with `image: my_task`.
+4. Check it with `rtmo validate <manifest>`, then run it with `tools/run-test.sh` as above.
 
 ---
-
-
 
 ## 🖥️ Sample output
 
@@ -237,52 +114,17 @@ The `[PERF]` lines of all task containers are what `tools/perf_report.py` turns 
 
 ---
 
-## 🧰 Useful commands
-
-```bash
-# Inspect Redis content
-docker exec -it redis redis-cli
-> HGETALL schedule_data
-> HGET schedule_data schedule:leader
-
-# Tail logs
-docker logs -f deploy-manager
-docker logs -f stress_task_1
-docker logs --tail 200 stress_task_2
-
-# List task containers
-docker ps --filter "name=stress_task_"
-docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
-
-# Inspect what entrypoint a task image was built with
-docker inspect stress_task_1 \
-    --format 'Entrypoint={{.Config.Entrypoint}}  Cmd={{.Config.Cmd}}'
-
-# Wipe POSIX message queues between runs (mandatory!)
-sudo rm -f /dev/mqueue/*
-
-# Full cleanup
-docker compose down -v
-docker rm -f $(docker ps -aq --filter "name=stress_task_") 2>/dev/null || true
-```
-
----
-
 ## ❗ Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Tasks exit immediately with `Exited (0)` and `COMMAND="/bin/bash"` | Per-task images were built without an entrypoint (image-builder step failed or skipped) | Re-run `python3 tooling/legacy/choreography-mqueue/image-builder/src/main.py -f <manifest> -c <ctx>` and check it ends with `Successfully built <alias>`. Verify with `docker inspect <alias> --format '{{.Config.Entrypoint}}'`. |
-| Task containers keep printing `Waiting for schedule_data in Redis...` | The deploy-manager failed before writing the plan | `docker logs deploy-manager` |
-| `Container name "/redis" is already in use` | Stale container from a previous run under a different compose project | `start-test.sh` removes it automatically; otherwise: `docker rm -f redis deploy-manager` |
+| Tasks exit immediately with `Exited (0)` and `COMMAND="/bin/bash"` | Per-task images were built without an entrypoint (image-builder step failed or skipped) | Re-run `rtmo build <manifest>` and check it ends with `built … task image(s)`. Verify with `docker inspect <alias> --format '{{.Config.Entrypoint}}'`. |
 | `mq_open: Permission denied` / tasks hang on first message | `/dev/mqueue` not writable from the container | Make sure POSIX message queues are exposed by the kernel; `deploy-manager` already starts the wrappers with `ipc_mode=host`. |
 | Tasks miss their deadlines | CPU contention / wrong affinity | Use isolated CPUs (`isolcpus=...` boot param) and pin tasks via `cpu_affinity`. |
 | `sched_setscheduler failed: Operation not permitted` | Container missing `SYS_NICE` capability or `rtprio` ulimit | The `deploy-manager` already passes `cap_add=[SYS_NICE, IPC_LOCK]` and `rtprio=99`; don't run wrappers manually without those flags. |
-| Stale messages between runs cause weird hangs | POSIX message queues persist in the kernel until reboot or manual delete | `sudo rm -f /dev/mqueue/*` before each run (`start-test.sh` does this for you). |
-| The run ignores manifest changes | Manifest baked into the deploy-manager image | Rebuild it: `docker compose build deploy-manager` (`start-test.sh` already does it) |
-| `Permission denied` on `/var/run/docker.sock` | User not in `docker` group | `sudo usermod -aG docker $USER` and re-login. |
-| Port `6379` already in use | A local Redis is already running | `sudo systemctl stop redis` (or change the compose port). |
 | `cmake: not found` while the image-builder is building a task | Base image was rebuilt without the build toolchain | Force a clean rebuild: `docker rmi rtmo/task-wrapper:choreography-mqueue && docker build --no-cache -t rtmo/task-wrapper:choreography-mqueue -f runtime/choreography/task-wrapper/mqueue/Dockerfile .` |
+
+More, for installing and running RTMO: the troubleshooting table of the RTMO Field Guide and `tooling/README.md`.
 
 ---
 

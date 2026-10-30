@@ -30,17 +30,20 @@ This repository hosts the **reference implementations** of the framework describ
 │   ├── dsl/                          #   manifest model, validation, legacy converter
 │   ├── builder/                      #   build profiles and image builds (developer side)
 │   ├── deploy-manager/               #   run profiles and Redis plan encoders (device side)
-│   ├── tests/                        #   python3 -m unittest discover -s tooling/tests
-│   └── legacy/<impl>/                #   deploy-manager and image-builder still used by the start scripts
-├── docker/<impl>/                    # Dockerfiles and compose.yaml (build context: repository root)
-├── tests/start-test/<impl>.sh        # one test run of one implementation
-├── tools/                            # perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py, generate_context.py
+│   └── tests/                        #   python3 -m unittest discover -s tooling/tests
+├── docker/                           # deploy-manager.Dockerfile; <impl>/ task-wrapper and execution-manager
+│                                     #   Dockerfiles (build context: repository root)
+├── device/                           # compose.yaml (the device Redis), device.yaml.example
+├── scripts/                          # lib.sh, launchers of rtmo and rtmod
+├── tests/start-test/native.sh        # one run of the bare-metal baseline
+├── tools/                            # run-test.sh, perf_report.py, report-lib.sh, rt_vs_nonrt_ttest.py
 ├── docs/<impl>/                      # README and notes of each implementation
 ├── results/<impl>/<test>/            # test output (not in git)
+├── install.sh, VERSION
 └── benchmarks/                       # only on the benchmarks branch: the application
     ├── tasks/stress_task_1..6/       #   task sources, one copy for every implementation
-    ├── tasks/<impl>.yaml             #   default manifest of each implementation
-    ├── scenarios/                    #   benchmark scenarios
+    ├── scenarios/                    #   13 benchmark scenarios (DSL 0.1)
+    ├── golden/                       #   what the former tooling produced, for the tests
     └── run-campaign.sh               #   whole campaign: every scenario on every implementation
 ```
 
@@ -64,9 +67,9 @@ This repository hosts the **reference implementations** of the framework describ
 
 The four containerised implementations share the same building blocks:
 
-- **Image builder** (`tooling/legacy/<impl>/image-builder/`, runs on the developer machine): reads the manifest and
+- **Image builder** (`rtmo build`, `tooling/builder/`, runs on the developer machine): reads the manifest and
   builds one Docker image per task on top of the implementation's task-wrapper base image.
-- **Deploy manager** (`tooling/legacy/<impl>/deploy-manager/`, container): reads the manifest, starts one
+- **Deploy manager** (`rtmod apply`, `tooling/deploy-manager/`, container): reads the manifest, starts one
   task-wrapper container per task image and writes the execution plan into **Redis**.
 - **Orchestration**: a central **execution manager** reads the plan from Redis and triggers the
   task-wrappers (workers).

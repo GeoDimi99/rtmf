@@ -9,7 +9,6 @@ Python side of RTMO. Run each component with this folder on `PYTHONPATH`, so bot
 | `builder/` | Developer side, command `rtmo` (`main.py`): validate, build (images + lock file), push. Build profiles per coordination and technology. |
 | `deploy-manager/` | Device side, command `rtmod` (`main.py`, runs in the deploy-manager image): apply, status, stop. Run profiles (how to run the task-wrapper and execution-manager containers), readiness check, plan encoders, applied state in Redis. |
 | `tests/` | Unit tests, and tests showing the new code produces what the legacy deploy-managers produce. |
-| `legacy/<impl>/` | The former deploy-managers and image-builders, still used by `tests/start-test/<impl>.sh`; removed once the new path is confirmed. |
 
 Install the commands with `install.sh` (see the repository README).
 
@@ -36,8 +35,9 @@ python3 -m unittest discover -s tooling/tests -v
 The equivalence tests run on the two manifests in `tests/fixtures/` and, on the `benchmarks`
 branch, on every scenario in `benchmarks/scenarios/`, for each of the four implementations:
 
-The reference is what the legacy tooling produced, recorded once by `record_golden.py`
-into `tests/golden/` (fixtures) and `benchmarks/golden/` (scenarios):
+The reference is what the former per-implementation tooling produced, recorded before it was
+removed (P4) into `tests/golden/` (fixtures) and `benchmarks/golden/` (scenarios, each next to
+its legacy manifest `legacy.yaml`):
 
 - `test_encoders_match_golden`: the Redis plan written by the new encoders equals the legacy
   one, key by key. Only differences: the new `plan:format` key, and `schedule:images`

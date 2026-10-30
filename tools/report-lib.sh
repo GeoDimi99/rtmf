@@ -46,10 +46,6 @@ rl_follow_container() {
             echo "[ERROR] Container '$name' did not appear within ${timeout}s." >&2
             return 1
         fi
-        if [ "$(docker inspect -f '{{.State.Status}} {{.State.ExitCode}}' deploy-manager 2>/dev/null | awk '{print ($1=="exited" && $2!=0)}')" = "1" ]; then
-            echo "[ERROR] deploy-manager failed before starting '$name' (see $LOG_DIR/deploy-manager.log)." >&2
-            return 1
-        fi
         sleep 1
         waited=$((waited + 1))
     done

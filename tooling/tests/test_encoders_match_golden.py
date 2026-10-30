@@ -1,6 +1,6 @@
 """
 The encoders write the Redis plan the legacy deploy-managers wrote (recorded
-in golden/<manifest>/<impl>.json by record_golden.py), for every test manifest
+in golden/<manifest>/<impl>.json before the legacy code was removed), for every test manifest
 on every implementation.
 
 New side: dsl.convert -> dsl.load -> encoders.write.

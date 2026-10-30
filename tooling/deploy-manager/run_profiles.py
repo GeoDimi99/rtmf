@@ -118,6 +118,7 @@ def _em_orchestration_grpc(manifest: Manifest) -> Dict:
         "cap_add": ["SYS_NICE"],
     }
 
+
 PROFILES: Dict[str, RunProfile] = {
     # choreography wrappers read the plan from 'redis' on the device network
     "choreography-mqueue": RunProfile(

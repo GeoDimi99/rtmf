@@ -44,8 +44,10 @@ its legacy manifest `legacy.yaml`):
   (choreography), compared as a set because the legacy order came from a Python set; the new
   encoder writes it sorted.
 - `test_run_profiles_match_golden`: task-wrapper and execution-manager containers get the
-  legacy options; only additions are the `rtmo.*` labels and, for choreography and the
-  orchestration-mqueue execution manager, the device network `rtmo`.
+  legacy options. Intended differences: the `rtmo.*` labels; the device network `rtmo` for
+  choreography and the orchestration-mqueue execution manager (P4); the CPU placement from
+  the manifest (P5): cpuset `{control_cpu} + task_cpus` instead of `0-7`, the control core for
+  the execution managers, and `RTMO_CONTROL_CPU` / `RTMO_TASK_CPUS` in the environment.
 - `test_build_profiles_match_golden`: task images get the legacy Dockerfile instructions,
   base image and cache use.
 - `test_apply`, `test_rtmo_cli`, `test_dsl`: apply steps and checks, the `rtmo` command and

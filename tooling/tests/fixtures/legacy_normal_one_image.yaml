@@ -1,0 +1,45 @@
+# Legacy manifest used by the tests: non real-time tasks ('normal', nice
+# values), one image declared next to an unused one.
+version: "1.0"
+
+images:
+  base: "rtmo/task-wrapper:choreography-zeromq"
+  repo: "example/task-wrapper"
+  tasks:
+    - alias: "worker"
+      src: "worker"
+    - alias: "unused"
+      src: "unused"
+
+schedule:
+  name: "Fixture: non real-time"
+  description: "SCHED_NORMAL tasks with nice values"
+  iterations: 1
+
+  tasks:
+    - id: 10
+      image: "worker"
+      start: 0
+      deadline: 250
+      cpu_affinity: 7
+      policy: "normal"
+      priority: -8
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 16
+      outputs:
+        result:
+          type: int
+
+    - id: 11
+      image: "worker"
+      start: 250
+      deadline: 260
+      cpu_affinity: 7
+      policy: "normal"
+      priority: 19
+      depends_on: []
+      inputs: {}
+      outputs: {}

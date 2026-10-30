@@ -1,0 +1,92 @@
+# Legacy manifest used by the tests: several tasks per image, two tasks tied
+# on the earliest start (the leader is the first one), three cores.
+version: "1.0"
+
+images:
+  base: "rtmo/task-wrapper:orchestration-mqueue"
+  repo: "example/task-wrapper"
+  tasks:
+    - alias: "img_b"
+      src: "img_b"
+    - alias: "img_a"
+      src: "img_a"
+    - alias: "img_c"
+      src: "img_c"
+
+schedule:
+  name: "Fixture: three images"
+  description: "Ties on the earliest start, several tasks per image"
+  iterations: 7
+
+  tasks:
+    - id: 1
+      image: "img_a"
+      start: 100
+      deadline: 400
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 60
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 12
+        io_percentage:
+          type: int
+          value: 25
+      outputs:
+        result:
+          type: int
+
+    - id: 2
+      image: "img_c"
+      start: 20
+      deadline: 900
+      cpu_affinity: 6
+      policy: "rr"
+      priority: 99
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 3
+      outputs:
+        result:
+          type: int
+
+    - id: 3
+      image: "img_b"
+      start: 20
+      deadline: 300
+      cpu_affinity: 4
+      policy: "FIFO"
+      priority: 1
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 8
+        io_percentage:
+          type: int
+          value: 0
+      outputs:
+        result:
+          type: int
+
+    - id: 4
+      image: "img_a"
+      start: 500
+      deadline: 1500
+      cpu_affinity: 5
+      policy: "fifo"
+      priority: 70
+      depends_on: []
+      inputs:
+        total_ops:
+          type: int
+          value: 30
+      outputs:
+        result:
+          type: int
+        checksum:
+          type: int

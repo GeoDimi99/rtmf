@@ -1,0 +1,397 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_1",
+    "TASK_QUEUE_NAME": "stress_task_1"
+   },
+   "image": "stress_task_1",
+   "ipc_mode": "host",
+   "name": "stress_task_1",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_2",
+    "TASK_QUEUE_NAME": "stress_task_2"
+   },
+   "image": "stress_task_2",
+   "ipc_mode": "host",
+   "name": "stress_task_2",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_3",
+    "TASK_QUEUE_NAME": "stress_task_3"
+   },
+   "image": "stress_task_3",
+   "ipc_mode": "host",
+   "name": "stress_task_3",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_4",
+    "TASK_QUEUE_NAME": "stress_task_4"
+   },
+   "image": "stress_task_4",
+   "ipc_mode": "host",
+   "name": "stress_task_4",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_5",
+    "TASK_QUEUE_NAME": "stress_task_5"
+   },
+   "image": "stress_task_5",
+   "ipc_mode": "host",
+   "name": "stress_task_5",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_6",
+    "TASK_QUEUE_NAME": "stress_task_6"
+   },
+   "image": "stress_task_6",
+   "ipc_mode": "host",
+   "name": "stress_task_6",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ]
+  }
+ ],
+ "redis": {
+  "schedule": {
+   "description": "Benchmark with configurable CPU/IO ratio using total_ops and io_percentage parameters",
+   "iterations": "100",
+   "length": "18",
+   "name": "Configurable CPU/IO Benchmark",
+   "version": "0.0.0"
+  },
+  "scheduletask:1": {
+   "cpu_affinity": "5",
+   "deadline": "650",
+   "depends_on": "[]",
+   "id": "1",
+   "image": "stress_task_1",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "50"
+  },
+  "scheduletask:10": {
+   "cpu_affinity": "6",
+   "deadline": "970",
+   "depends_on": "[]",
+   "id": "10",
+   "image": "stress_task_4",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "370"
+  },
+  "scheduletask:11": {
+   "cpu_affinity": "6",
+   "deadline": "1200",
+   "depends_on": "[]",
+   "id": "11",
+   "image": "stress_task_5",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "600"
+  },
+  "scheduletask:12": {
+   "cpu_affinity": "6",
+   "deadline": "1250",
+   "depends_on": "[]",
+   "id": "12",
+   "image": "stress_task_6",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "650"
+  },
+  "scheduletask:13": {
+   "cpu_affinity": "7",
+   "deadline": "650",
+   "depends_on": "[]",
+   "id": "13",
+   "image": "stress_task_1",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "50"
+  },
+  "scheduletask:14": {
+   "cpu_affinity": "7",
+   "deadline": "1300",
+   "depends_on": "[]",
+   "id": "14",
+   "image": "stress_task_2",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "300"
+  },
+  "scheduletask:15": {
+   "cpu_affinity": "7",
+   "deadline": "950",
+   "depends_on": "[]",
+   "id": "15",
+   "image": "stress_task_3",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "70",
+   "start": "350"
+  },
+  "scheduletask:16": {
+   "cpu_affinity": "7",
+   "deadline": "970",
+   "depends_on": "[]",
+   "id": "16",
+   "image": "stress_task_4",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "370"
+  },
+  "scheduletask:17": {
+   "cpu_affinity": "7",
+   "deadline": "1200",
+   "depends_on": "[]",
+   "id": "17",
+   "image": "stress_task_5",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "600"
+  },
+  "scheduletask:18": {
+   "cpu_affinity": "7",
+   "deadline": "1250",
+   "depends_on": "[]",
+   "id": "18",
+   "image": "stress_task_6",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "650"
+  },
+  "scheduletask:2": {
+   "cpu_affinity": "5",
+   "deadline": "1300",
+   "depends_on": "[]",
+   "id": "2",
+   "image": "stress_task_2",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "300"
+  },
+  "scheduletask:3": {
+   "cpu_affinity": "5",
+   "deadline": "950",
+   "depends_on": "[]",
+   "id": "3",
+   "image": "stress_task_3",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "70",
+   "start": "350"
+  },
+  "scheduletask:4": {
+   "cpu_affinity": "5",
+   "deadline": "970",
+   "depends_on": "[]",
+   "id": "4",
+   "image": "stress_task_4",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "370"
+  },
+  "scheduletask:5": {
+   "cpu_affinity": "5",
+   "deadline": "1200",
+   "depends_on": "[]",
+   "id": "5",
+   "image": "stress_task_5",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "600"
+  },
+  "scheduletask:6": {
+   "cpu_affinity": "5",
+   "deadline": "1250",
+   "depends_on": "[]",
+   "id": "6",
+   "image": "stress_task_6",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "60",
+   "start": "650"
+  },
+  "scheduletask:7": {
+   "cpu_affinity": "6",
+   "deadline": "650",
+   "depends_on": "[]",
+   "id": "7",
+   "image": "stress_task_1",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "50"
+  },
+  "scheduletask:8": {
+   "cpu_affinity": "6",
+   "deadline": "1300",
+   "depends_on": "[]",
+   "id": "8",
+   "image": "stress_task_2",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "50",
+   "start": "300"
+  },
+  "scheduletask:9": {
+   "cpu_affinity": "6",
+   "deadline": "950",
+   "depends_on": "[]",
+   "id": "9",
+   "image": "stress_task_3",
+   "inputs": "[{\"total_ops\": 16, \"io_percentage\": 0}]",
+   "outputs": "{\"result\": \"int\"}",
+   "policy": "fifo",
+   "priority": "70",
+   "start": "350"
+  }
+ }
+}

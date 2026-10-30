@@ -1,0 +1,232 @@
+{
+ "containers": [
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_1",
+    "TASK_QUEUE_NAME": "stress_task_1"
+   },
+   "image": "stress_task_1",
+   "name": "stress_task_1",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_2",
+    "TASK_QUEUE_NAME": "stress_task_2"
+   },
+   "image": "stress_task_2",
+   "name": "stress_task_2",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_3",
+    "TASK_QUEUE_NAME": "stress_task_3"
+   },
+   "image": "stress_task_3",
+   "name": "stress_task_3",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_4",
+    "TASK_QUEUE_NAME": "stress_task_4"
+   },
+   "image": "stress_task_4",
+   "name": "stress_task_4",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_5",
+    "TASK_QUEUE_NAME": "stress_task_5"
+   },
+   "image": "stress_task_5",
+   "name": "stress_task_5",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  },
+  {
+   "cap_add": [
+    "SYS_NICE",
+    "IPC_LOCK"
+   ],
+   "cpuset_cpus": "0-7",
+   "detach": true,
+   "environment": {
+    "TASK_NAME": "stress_task_6",
+    "TASK_QUEUE_NAME": "stress_task_6"
+   },
+   "image": "stress_task_6",
+   "name": "stress_task_6",
+   "network": "rtmo_default",
+   "remove": false,
+   "ulimits": [
+    {
+     "Hard": 99,
+     "Name": "rtprio",
+     "Soft": 99
+    },
+    {
+     "Hard": -1,
+     "Name": "memlock",
+     "Soft": -1
+    }
+   ],
+   "volumes": {
+    "zmq_ipc": {
+     "bind": "/ipc",
+     "mode": "rw"
+    }
+   }
+  }
+ ],
+ "redis": {
+  "schedule_data": {
+   "schedule:description": "Benchmark with configurable CPU/IO ratio using total_ops and io_percentage parameters",
+   "schedule:duration": "1300",
+   "schedule:images": "[\"stress_task_1\", \"stress_task_3\", \"stress_task_4\", \"stress_task_6\", \"stress_task_2\", \"stress_task_5\"]",
+   "schedule:iterations": "100",
+   "schedule:leader": "stress_task_1",
+   "schedule:length": "6",
+   "schedule:name": "Configurable CPU/IO Benchmark",
+   "schedule:stress_task_1:0": "{\"id\": 1, \"start\": 50, \"deadline\": 650, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"50\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_1:length": "1",
+   "schedule:stress_task_2:0": "{\"id\": 2, \"start\": 300, \"deadline\": 1300, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"50\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_2:length": "1",
+   "schedule:stress_task_3:0": "{\"id\": 3, \"start\": 350, \"deadline\": 950, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"70\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_3:length": "1",
+   "schedule:stress_task_4:0": "{\"id\": 4, \"start\": 370, \"deadline\": 970, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"60\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_4:length": "1",
+   "schedule:stress_task_5:0": "{\"id\": 5, \"start\": 600, \"deadline\": 1200, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"60\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_5:length": "1",
+   "schedule:stress_task_6:0": "{\"id\": 6, \"start\": 650, \"deadline\": 1250, \"cpu_affinity\": \"5\", \"policy\": \"fifo\", \"priority\": \"60\", \"depends_on\": \"[]\", \"inputs\": \"[{\\\"total_ops\\\": 17, \\\"io_percentage\\\": 0}]\", \"outputs\": \"{\\\"result\\\": \\\"int\\\"}\"}",
+   "schedule:stress_task_6:length": "1",
+   "schedule:version": "0.0.0"
+  }
+ }
+}

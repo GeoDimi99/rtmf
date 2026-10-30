@@ -12,6 +12,7 @@
 #include "execution_manager.h"
 #include "app_task.h"
 #include "logger.h"
+#include "rtmo_cpu.h"
 
 
 
@@ -30,6 +31,8 @@ void int_handler(int dummy) {
 int main(int argc, char *argv[]) {
     (void)argc; (void)argv;
 
+    /* Control core first (RTMO_CONTROL_CPU): every thread created afterwards inherits it */
+    rtmo_pin_control("task-wrapper");
 
     /* Lock memory */
     if(mlockall(MCL_CURRENT | MCL_FUTURE) == -1) {
@@ -40,11 +43,6 @@ int main(int argc, char *argv[]) {
     /* Registre the signal handler for a clean clousure */
     signal(SIGINT, int_handler);
 
-    /* Set Core 4 */
-    cpu_set_t set;
-    CPU_ZERO(&set);                                     // clear cpu mask
-    CPU_SET(4, &set);                                   // set cpu 4
-    sched_setaffinity(0, sizeof(cpu_set_t), &set);      // 0 is the calling process
 
     /* Setting scheduler policy and priority*/
     struct sched_param param;

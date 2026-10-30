@@ -37,13 +37,13 @@ docs/orchestration-mqueue/                       # this README and notes
 
 1. **`rtmod apply`** (the deploy-manager) reads the manifest and, for every entry of `images`, starts a
    task-wrapper container named after the image alias (`ipc_mode=host`,
-   `cap_add=[SYS_NICE, IPC_LOCK]`, `rtprio=99`, `memlock=unlimited`, `cpuset 0-7`,
+   `cap_add=[SYS_NICE, IPC_LOCK]`, `rtprio=99`, `memlock=unlimited`, `cpuset` = the manifest's `control_cpu` + `task_cpus`, env `RTMO_CONTROL_CPU` / `RTMO_TASK_CPUS`,
    env `TASK_NAME` / `TASK_QUEUE_NAME` = alias).
 2. It then writes the schedule into Redis:
    - hash `schedule`: `name`, `version`, `description`, `iterations`, `length`
    - hash `scheduletask:<i>` (i = 1..length): `id`, `image`, `start`, `deadline`, `cpu_affinity`,
      `policy`, `priority`, `depends_on`, `inputs`, `outputs`
-3. **execution-manager** (started last by `rtmod apply`, `ipc: host`, pinned to CPU 4) waits until the
+3. **execution-manager** (started last by `rtmod apply`, `ipc: host`, pinned to the manifest's `control_cpu`) waits until the
    `schedule` key exists in Redis, builds the timeline and runs it `iterations` times.
 4. Message queues: the execution-manager listens on `/execution_manager_q`; every task-wrapper
    listens on `/<alias>_q` and waits until `/execution_manager_q` exists. At each activation the

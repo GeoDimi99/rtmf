@@ -137,6 +137,11 @@ sudo benchmarks/run-campaign.sh          # every scenario on every implementatio
 
 `native` keeps its own script: `sudo tests/start-test/native.sh [test-name]`.
 
+**CPU placement.** Each runtime pins its control thread to the manifest's `control_cpu` first
+thing in `main()` and logs it (`grep rtmo-affinity results/<impl>/<test>/logs/*.log`); task
+threads start on their `cpu_affinity`, which `perf.csv` records as `core_id`. Redis and `rtmod`
+run on `infra_cpu` from `/etc/rtmo/device.yaml` (default 3).
+
 To compare a real-time run against non real-time runs of the same implementation:
 
 ```bash

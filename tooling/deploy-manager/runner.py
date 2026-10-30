@@ -46,8 +46,8 @@ class Runner:
         refs = image_refs or {}
         return [self.run(profile, manifest, img.name, refs.get(img.name)) for img in manifest.images]
 
-    def run_execution_manager(self, profile: RunProfile, image: str):
-        spec = dict(profile.execution_manager)
+    def run_execution_manager(self, profile: RunProfile, manifest: Manifest, image: str):
+        spec = profile.execution_manager(manifest)
         name = spec.pop("name")
         return self._start(name, image, spec, "execution-manager", profile)
 

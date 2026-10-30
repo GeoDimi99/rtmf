@@ -16,6 +16,7 @@
 #include "grpc_client.h"
 #include "realtime_scheduler.h"
 #include "logger.h"
+#include "rtmo_cpu.h"
 
 #define MAX_TASKS 100
 #define MAX_EPOLL_EVENTS 20
@@ -147,6 +148,10 @@ void print_schedule_report(schedule_t *sched) {
 }
 
 int main(int argc, char *argv[]) {
+    // Control core first (RTMO_CONTROL_CPU): the gRPC call threads, gRPC internal threads and
+    // the RT timer thread created afterwards inherit it.
+    rtmo_pin_control("execution-manager");
+
     log_message(LOG_INFO, "execution-manager", "Dual priority queue architecture tester starting");
 
     // ========================================

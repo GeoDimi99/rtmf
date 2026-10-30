@@ -37,7 +37,7 @@ docs/choreography-mqueue/                  # this README and notes
 1. **`rtmod apply`** (the deploy-manager) reads the manifest and, for every entry of `images`, starts a
    task-wrapper container named after the image alias. The containers join the device network `rtmo`
    (so they can reach `redis`) and get `ipc_mode=host`, `cap_add=[SYS_NICE, IPC_LOCK]`,
-   `rtprio=99`, `memlock=unlimited`, `cpuset 0-7`, env `TASK_NAME` / `TASK_QUEUE_NAME` = alias.
+   `rtprio=99`, `memlock=unlimited`, `cpuset` = the manifest's `control_cpu` + `task_cpus`, env `RTMO_CONTROL_CPU` / `RTMO_TASK_CPUS`, env `TASK_NAME` / `TASK_QUEUE_NAME` = alias.
 2. It then writes the distributed plan into a single Redis hash, `schedule_data`:
    - `schedule:name`, `schedule:version`, `schedule:description`, `schedule:iterations`
    - `schedule:images`: JSON list of the images, `schedule:length`: number of images

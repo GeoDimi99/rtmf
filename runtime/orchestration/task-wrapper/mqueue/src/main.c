@@ -6,6 +6,7 @@
 #include <signal.h>
 #include "task_wrapper.h"
 #include "logger.h"
+#include "rtmo_cpu.h"
 
 
 /* Global reference to the main loop to allow the signal handler to quit it. */
@@ -20,6 +21,10 @@ static void sigint_handler(int signum) {
 }
 
 int main(int argc, char *argv[]) {
+
+    /* Control core first (RTMO_CONTROL_CPU): every thread created afterwards inherits it */
+    rtmo_pin_control("task-wrapper");
+
     int exit_code = 0;
 
 
@@ -30,11 +35,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-     /* Set Core 4 */
-    cpu_set_t set;
-    CPU_ZERO(&set);                                     // clear cpu mask
-    CPU_SET(4, &set);                                   // set cpu 4
-    sched_setaffinity(0, sizeof(cpu_set_t), &set);      // 0 is the calling process
 
     /* Setting scheduler policy and priority*/
     struct sched_param param;

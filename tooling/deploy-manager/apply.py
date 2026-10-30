@@ -74,5 +74,5 @@ def apply(manifest: Manifest, docker_client, redis_client, locked: Optional[Dict
 
         if profile.execution_manager:
             em_image = locked["execution_manager"]["id"] if locked else f"rtmo/execution-manager:{profile.name}"
-            em = runner.run_execution_manager(profile, em_image)
+            em = runner.run_execution_manager(profile, manifest, em_image)
             log(f"started {em.name}")

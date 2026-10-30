@@ -18,9 +18,9 @@ WORKDIR /app
 # Copy task-wrapper source
 
 COPY runtime/choreography/task-wrapper/mqueue/ ./task-wrapper/
-COPY runtime/common/shared/include/ ./task-wrapper/include/
-COPY runtime/common/choreography-mqueue/include/ ./task-wrapper/include/
-COPY runtime/common/shared/src/ ./task-wrapper/src/
+COPY runtime/common/include/ ./task-wrapper/include/
+COPY runtime/choreography/ipc/mqueue/include/ ./task-wrapper/include/
+COPY runtime/common/src/ ./task-wrapper/src/
 
 
 

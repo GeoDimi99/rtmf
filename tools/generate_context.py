@@ -1,7 +1,7 @@
 import os
 
 def main():
-    # The script is in docs/, so project root is one level up
+    # The script is in tools/, so the repository root is one level up
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.abspath(os.path.join(script_dir, ".."))
     output_file = os.path.join(script_dir, "project_context.txt")

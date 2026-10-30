@@ -28,10 +28,9 @@ RUN echo "=== Files in proto directory ===" && ls -la ./proto/ && echo "=== End 
 
 # Copy task-wrapper source
 COPY runtime/orchestration/task-wrapper/grpc/ ./task-wrapper/
-COPY runtime/common/shared/include/ ./task-wrapper/include/
-COPY runtime/common/orchestration-grpc/include/ ./task-wrapper/include/
-COPY runtime/common/shared/src/ ./task-wrapper/src/
-COPY runtime/common/orchestration-grpc/src/ ./task-wrapper/src/
+COPY runtime/common/include/ ./task-wrapper/include/
+COPY runtime/orchestration/ipc/grpc/include/ ./task-wrapper/include/
+COPY runtime/common/src/ ./task-wrapper/src/
 
 # Create proto directory structure and copy generated proto files into task-wrapper
 # The generated .grpc.pb.h includes "proto/task_service.pb.h", so we need proto/proto/ structure

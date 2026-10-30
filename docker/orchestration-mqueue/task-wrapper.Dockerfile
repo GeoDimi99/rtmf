@@ -17,9 +17,9 @@ WORKDIR /app
 # Copy task-wrapper source
 
 COPY runtime/orchestration/task-wrapper/mqueue/ ./task-wrapper/
-COPY runtime/common/shared/include/ ./task-wrapper/include/
-COPY runtime/common/orchestration-mqueue/include/ ./task-wrapper/include/
-COPY runtime/common/shared/src/ ./task-wrapper/src/
+COPY runtime/common/include/ ./task-wrapper/include/
+COPY runtime/orchestration/ipc/mqueue/include/ ./task-wrapper/include/
+COPY runtime/common/src/ ./task-wrapper/src/
 
 
 

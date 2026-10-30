@@ -18,10 +18,9 @@ RUN apt-get update && \
 COPY tooling/legacy/orchestration-grpc/deploy-manager/pyproject.toml .
 COPY tooling/legacy/orchestration-grpc/deploy-manager/src/ ./src/
 COPY runtime/orchestration/task-wrapper/grpc/ ./task-wrapper/
-COPY runtime/common/shared/include/ task-wrapper/include/
-COPY runtime/common/orchestration-grpc/include/ task-wrapper/include/
-COPY runtime/common/shared/src/ task-wrapper/src/
-COPY runtime/common/orchestration-grpc/src/ task-wrapper/src/
+COPY runtime/common/include/ task-wrapper/include/
+COPY runtime/orchestration/ipc/grpc/include/ task-wrapper/include/
+COPY runtime/common/src/ task-wrapper/src/
 
 # Copy task manifest
 COPY tests/tasks/orchestration-grpc/ ./tests/test_0_code/

@@ -23,8 +23,7 @@ RUN protoc --cpp_out=./proto --grpc_out=./proto \
     ./proto/task_service.proto
 
 # Copy common headers
-COPY runtime/common/shared/ ./common/
-COPY runtime/common/orchestration-grpc/ ./common/
+COPY runtime/common/ ./common/
 
 # Copy execution-manager source
 COPY runtime/orchestration/execution-manager/grpc/ ./execution-manager/

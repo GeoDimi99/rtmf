@@ -14,8 +14,8 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy common headers
-COPY runtime/common/shared/ ./common/
-COPY runtime/common/orchestration-mqueue/ ./common/
+COPY runtime/common/ ./common/
+COPY runtime/orchestration/ipc/mqueue/ ./common/
 
 # Copy execution-manager source
 COPY runtime/orchestration/execution-manager/mqueue/ ./execution-manager/

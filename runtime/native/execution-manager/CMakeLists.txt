@@ -23,18 +23,16 @@ add_executable(execution-manager
     src/execution_manager.c
     src/schedule.c
     src/app_task.c
-    ../../common/shared/src/logger.c
+    ../../common/src/logger.c
 )
 
 # Set include directories for the target
 # Using PRIVATE scope to avoid leaking these paths to other potential targets
 # (common/ lives in runtime/, two levels up from this CMakeLists.txt:
-#  runtime/native/execution-manager -> runtime/native -> runtime -> common;
-#  shared/ holds the files common to every implementation, native/ the rest)
+#  runtime/native/execution-manager -> runtime/native -> runtime -> common)
 target_include_directories(execution-manager PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/shared/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/native/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../common/include
 )
 
 # Find Threading support (pthread)

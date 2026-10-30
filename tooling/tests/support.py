@@ -192,9 +192,10 @@ def legacy(impl: str):
 # --- manifests ---------------------------------------------------------------
 
 def manifests():
-    """Legacy manifests to test on: the fixtures, and the benchmark scenarios when present."""
+    """Legacy manifests to test on: the fixtures, and on the benchmarks branch the legacy
+    version of every scenario (benchmarks/golden/<scenario>/legacy.yaml)."""
     files = sorted((TOOLING / "tests" / "fixtures").glob("*.yaml"))
-    files += sorted((REPO / "benchmarks" / "scenarios").glob("*.yaml"))
+    files += sorted((REPO / "benchmarks" / "golden").glob("*/legacy.yaml"))
     return files
 
 
@@ -202,4 +203,9 @@ def golden_dir(manifest: Path) -> Path:
     """Where the recorded legacy output of a test manifest lives (see record_golden.py)."""
     if manifest.parent == TOOLING / "tests" / "fixtures":
         return TOOLING / "tests" / "golden" / manifest.stem
-    return REPO / "benchmarks" / "golden" / manifest.stem
+    return manifest.parent          # benchmarks/golden/<scenario>/, next to legacy.yaml
+
+
+def label(manifest: Path) -> str:
+    """Short name of a test manifest for test reports."""
+    return manifest.parent.name if manifest.name == "legacy.yaml" else manifest.stem
